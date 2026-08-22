@@ -29,7 +29,7 @@ API.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
       const isAuthRoute = error.config?.url?.includes('/auth/profile');
-
+ 
       // If unauthorized (unverified/expired token) or blocked
       if (status === 401 || status === 403) {
         if (isAuthRoute || data.message?.includes('blocked')) {
