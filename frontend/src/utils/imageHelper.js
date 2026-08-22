@@ -18,7 +18,7 @@ export const getImageUrl = (path) => {
   // Ensure path starts with a slash
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const backendHost = apiUrl.replace(/\/api\/?$/, '');
 
   return `${backendHost}${cleanPath}`;
