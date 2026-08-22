@@ -10,7 +10,8 @@ const getLogin = (req, res) => {
 
 const postLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password;
 
     if (!email || !password) {
       return res.render('login', { error: 'Please enter both email and password.' });
@@ -35,7 +36,13 @@ const postLogin = async (req, res) => {
       role: admin.role
     };
 
-    return res.redirect('/admin/dashboard');
+    return req.session.save((sessionError) => {
+      if (sessionError) {
+        console.error('Admin session save error:', sessionError);
+        return res.render('login', { error: 'Unable to start your session. Please try again.' });
+      }
+      return res.redirect('/admin/dashboard');
+    });
   } catch (error) {
     console.error('Admin login error:', error);
     return res.render('login', { error: 'An unexpected error occurred. Please try again.' });
