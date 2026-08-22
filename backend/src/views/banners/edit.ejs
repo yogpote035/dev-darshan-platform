@@ -1,0 +1,70 @@
+<%- include('../partials/header', { title: 'Edit Banner - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Edit Banner</h2>
+      <p>Modify slider titles, images, or click links.</p>
+    </div>
+    <div>
+      <a href="/admin/banners" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Banners
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/banners/<%= banner.id %>/edit" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="title" class="form-label">Banner Title</label>
+          <input type="text" class="form-control" id="title" name="title" value="<%= banner.title %>" required>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label d-block">Current Banner Image</label>
+          <% if (banner.image) { %>
+            <div class="mb-2">
+              <img src="<%= banner.image %>" alt="<%= banner.title %>" class="rounded border border-secondary" style="max-width: 300px; height: auto;">
+            </div>
+          <% } else { %>
+            <div class="text-muted mb-2">No image uploaded.</div>
+          <% } %>
+          <label for="image" class="form-label">Replace Banner Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          <div class="form-text text-muted">Leave blank to keep existing image. Recommended size: 1200x500px.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="link" class="form-label">Click Link / Route</label>
+          <input type="text" class="form-control" id="link" name="link" value="<%= banner.link %>">
+          <div class="form-text text-muted">When clicked, redirects to this path.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="1" <%= banner.status === 1 ? 'selected' : '' %>>Active</option>
+            <option value="0" <%= banner.status === 0 ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-square-check me-2"></i>Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

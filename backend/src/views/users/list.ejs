@@ -1,0 +1,171 @@
+<%- include('../partials/header', { title: 'User Management - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>User Management</h2>
+      <p>View, block, activate, and manage platform user registrations.</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (success) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-circle-check me-2"></i><%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Filters & Search Card -->
+  <div class="dashboard-card mb-4 users-filter-card">
+    <form action="/admin/users" method="GET" class=" pt-4 row g-3 align-items-center justify-center users-filter-form">
+      <div class="col-md-5">
+        <label for="search" class="visually-hidden">Search Users</label>
+        <div class="input-group users-search-group">
+          <span class="input-group-text bg-dark border-secondary text-muted users-search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input type="text" class="form-control bg-dark border-secondary text-light users-search-input" id="search" name="search" placeholder="Search by name or phone..." value="<%= search %>">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label for="status" class="visually-hidden">Status</label>
+        <select class="form-select bg-dark border-secondary text-light" id="status" name="status">
+          <option value="all" <%= statusFilter === 'all' ? 'selected' : '' %>>All Statuses</option>
+          <option value="active" <%= statusFilter === 'active' ? 'selected' : '' %>>Active</option>
+          <option value="blocked" <%= statusFilter === 'blocked' ? 'selected' : '' %>>Blocked</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-gold-admin px-4">Apply Filters</button>
+        <% if (search || statusFilter !== 'all') { %>
+          <a href="/admin/users" class="btn btn-outline-secondary">Reset</a>
+        <% } %>
+      </div>
+    </form>
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-dark-custom">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle m-0 users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone Number</th>
+            <th>Subscription Plan</th>
+            <th>Subscription Expiry</th>
+            <th>Referral Code</th>
+            <th>Referred By</th>
+            <th>Wallet Balance</th>
+            <th>Status</th>
+            <th>Last Login</th>
+            <th>Registered At</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (users && users.length > 0) { %>
+            <% users.forEach(user => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-placeholder me-3">
+                      <% if (user.profile_image) { %>
+                        <img src="<%= user.profile_image %>" alt="Profile" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
+                      <% } else { %>
+                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-light" style="width: 36px; height: 36px; font-weight: 700;">
+                          <%= user.full_name.charAt(0).toUpperCase() %>
+                        </div>
+                      <% } %>
+                    </div>
+                    <div>
+                      <span class="fw-semibold"><%= user.full_name %></span>
+                    </div>
+                  </div>
+                </td>
+                <td><%= user.phone %></td>
+                <td>
+                  <% const planName = user.Plan ? user.Plan.plan_name : 'Free'; %>
+                  <% const planClass = planName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); %>
+                  <span class="subscription-plan subscription-plan-<%= planClass %>"><%= planName %></span>
+                </td>
+                <td>
+                  <% if (user.subscription_expiry) { %>
+                    <% const expiry = new Date(user.subscription_expiry); %>
+                    <span class="user-subscription-expiry"><%= expiry.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                  <% } else { %>
+                    <span class="user-subscription-expiry-na">N/A</span>
+                  <% } %>
+                </td>
+                <td>
+                  <code><%= user.referral_code || 'N/A' %></code>
+                </td>
+                <td>
+                  <% if (user.Referrer) { %>
+                    <span class="referrer-name"><%= user.Referrer.full_name %></span> <br/>
+                    <small class="referrer-phone"><%= user.Referrer.phone %></small>
+                  <% } else { %>
+                    <span class="referrer-direct">Direct</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="text-success fw-bold">₹<%= parseFloat(user.wallet_balance || 0).toFixed(2) %></span>
+                </td>
+                <td>
+                  <span class="badge-status <%= user.status === 'active' ? 'active' : 'blocked' %>">
+                    <%= user.status.toUpperCase() %>
+                  </span>
+                </td>
+                <td>
+                  <% if (user.last_login) { %>
+                    <% const log = new Date(user.last_login); %>
+                    <span class="user-last-login-date"><%= log.toLocaleDateString('en-IN') %></span>
+                    <small class="user-last-login-time"><%= log.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) %></small>
+                  <% } else { %>
+                    <span class="user-last-login-na">Never</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% const reg = new Date(user.created_at); %>
+                  <%= reg.toLocaleDateString('en-IN') %>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex">
+                    <% if (user.status === 'active') { %>
+                      <a href="/admin/users/<%= user.id %>/block" class="btn-action btn-edit" title="Block User" onclick="return confirm('Are you sure you want to block this user?')">
+                        <i class="fa-solid fa-ban text-danger"></i>
+                      </a>
+                    <% } else { %>
+                      <a href="/admin/users/<%= user.id %>/activate" class="btn-action btn-edit" title="Activate User" onclick="return confirm('Are you sure you want to activate this user?')">
+                        <i class="fa-solid fa-circle-check text-success"></i>
+                      </a>
+                    <% } %>
+                    <a href="/admin/users/<%= user.id %>/delete" class="btn-action btn-delete" title="Delete User" onclick="return confirm('CRITICAL: This will permanently delete user records, payments, and history. Proceed?')">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-users-slash fs-2 mb-3 d-block"></i>
+                No users found.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

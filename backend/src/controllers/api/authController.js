@@ -1,0 +1,174 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
+const { validationResult } = require('express-validator');
+const { User, SubscriptionPlan } = require('../../models');
+
+const register = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { full_name, phone, password, referral_code } = req.body;
+
+    // Fetch default plan (Free plan with plan_id = 1 or plan_name = 'Free')
+    const freePlan = await SubscriptionPlan.findOne({ where: { plan_name: 'Free' } });
+    const planId = freePlan ? freePlan.id : 1;
+    const durationDays = freePlan ? freePlan.duration_days : 3650;
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + durationDays);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // A referral can be supplied as the user's code or their existing mobile number.
+    // We accept common Indian number formats without exposing whether a number exists.
+    let referredById = null;
+    if (referral_code) {
+      const referralValue = referral_code.trim();
+      let referrer = await User.findOne({ where: { referral_code: referralValue } });
+
+      if (!referrer) {
+        const digits = referralValue.replace(/\D/g, '');
+        const mobile = digits.length >= 10 ? digits.slice(-10) : '';
+        if (mobile.length === 10) {
+          referrer = await User.findOne({
+            where: {
+              phone: {
+                [Op.in]: [mobile, `+91${mobile}`, `91${mobile}`]
+              }
+            }
+          });
+        }
+      }
+
+      if (!referrer) {
+        return res.status(400).json({ success: false, message: 'Referral code or mobile number was not found.' });
+      }
+      referredById = referrer.id;
+    }
+
+    // Generate unique referral code for the new user
+    const cleanPhone = phone.replace(/\D/g, '');
+    const phoneSuffix = cleanPhone.length >= 4 ? cleanPhone.slice(-4) : cleanPhone;
+    const ownReferralCode = `REF${phoneSuffix}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const newUser = await User.create({
+      full_name,
+      phone,
+      password: hashedPassword,
+      plan_id: planId,
+      subscription_expiry: expiryDate,
+      status: 'active',
+      referral_code: ownReferralCode,
+      referred_by: referredById,
+      wallet_balance: 0.00,
+      last_login: new Date()
+    });
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: newUser.id },
+      process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#',
+      { expiresIn: '7d' }
+    );
+
+    // Exclude password from output
+    const userOutput = newUser.toJSON();
+    delete userOutput.password;
+
+    return res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      token,
+      user: userOutput
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ success: false, message: 'Server error during registration.' });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { phone, password } = req.body;
+
+    const user = await User.findOne({
+      where: { phone },
+      include: [{ model: SubscriptionPlan, as: 'Plan' }]
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    if (user.status === 'blocked') {
+      return res.status(403).json({ success: false, message: 'Your account has been blocked. Please contact support.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Update last login
+    user.last_login = new Date();
+    await user.save();
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#',
+      { expiresIn: '7d' }
+    );
+
+    const userOutput = user.toJSON();
+    delete userOutput.password;
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: userOutput
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ success: false, message: 'Server error during login.' });
+  }
+};
+
+const profile = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user.referral_code) {
+      const cleanPhone = user.phone.replace(/\D/g, '');
+      const phoneSuffix = cleanPhone.length >= 4 ? cleanPhone.slice(-4) : cleanPhone;
+      user.referral_code = `REF${phoneSuffix}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      await user.save();
+    }
+
+    const userOutput = user.toJSON();
+    delete userOutput.password;
+
+    return res.status(200).json({
+      success: true,
+      user: userOutput
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching profile.' });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  profile
+};

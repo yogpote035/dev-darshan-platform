@@ -1,0 +1,142 @@
+<%- include('../partials/header', { title: 'Add Product - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Add Product</h2>
+      <p>Create a devotional product listing with pricing and subscription offer settings.</p>
+    </div>
+    <div>
+      <a href="/admin/products" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Products
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-lg-10">
+      <form action="/admin/products/add" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <label for="name" class="form-label">Product Name</label>
+            <input type="text" class="form-control" id="name" name="name" minlength="2" maxlength="255" required>
+          </div>
+          <div class="col-md-6">
+            <label for="slug" class="form-label">Slug</label>
+            <input type="text" class="form-control" id="slug" name="slug" maxlength="255" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="lowercase-hyphen-slug; auto-generated if blank">
+          </div>
+          <div class="col-md-6">
+            <label for="brand" class="form-label">Brand</label>
+            <input type="text" class="form-control" id="brand" name="brand" maxlength="150">
+          </div>
+          <div class="col-md-6">
+            <label for="sku" class="form-label">SKU</label>
+            <input type="text" class="form-control" id="sku" name="sku" maxlength="100" pattern="[A-Za-z0-9_-]+">
+          </div>
+          <div class="col-md-6">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" step="0.01" min="0" max="99999999.99" class="form-control" id="price" name="price" required>
+          </div>
+          <div class="col-md-6">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" min="0" max="2147483647" step="1" class="form-control" id="stock" name="stock" value="0" required>
+          </div>
+          <div class="col-md-6">
+            <label for="category_id" class="form-label">Category</label>
+            <select class="form-select" id="category_id" name="category_id">
+              <option value="">Select a category</option>
+              <% if (categories && categories.length) { %>
+                <% categories.forEach(category => { %>
+                  <option value="<%= category.id %>"><%= category.name %></option>
+                <% }) %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="image" class="form-label">Product Image</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          </div>
+          <div class="col-12">
+            <label for="short_description" class="form-label">Short Description</label>
+            <textarea class="form-control" id="short_description" name="short_description" rows="3" maxlength="500"></textarea>
+          </div>
+          <div class="col-12">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="5" maxlength="5000"></textarea>
+          </div>
+          <div class="col-md-3">
+            <label for="featured" class="form-label">Featured</label>
+            <select class="form-select" id="featured" name="featured">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="active" class="form-label">Active</label>
+            <select class="form-select" id="active" name="active">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="allow_one_rupee_offer" class="form-label">Enable ₹1 Offer</label>
+            <select class="form-select" id="allow_one_rupee_offer" name="allow_one_rupee_offer">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="subscription_enabled" class="form-label">Subscription Enabled</label>
+            <select class="form-select" id="subscription_enabled" name="subscription_enabled">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="one_rupee_price" class="form-label">₹1 Offer Price</label>
+            <input type="number" step="0.01" min="0.01" class="form-control" id="one_rupee_price" name="one_rupee_price" value="1.00">
+          </div>
+          <div class="col-md-4">
+            <label for="subscription_trial_days" class="form-label">Trial Days</label>
+            <input type="number" min="0" max="3650" step="1" class="form-control" id="subscription_trial_days" name="subscription_trial_days" value="7">
+          </div>
+          <div class="col-md-4">
+            <label for="subscription_amount" class="form-label">Recurring Monthly Amount</label>
+            <input type="number" step="0.01" min="0.01" class="form-control" id="subscription_amount" name="subscription_amount" placeholder="e.g. 199.00">
+          </div>
+          <div class="col-md-4">
+            <label for="subscription_plan_id" class="form-label">Select Offer Plan</label>
+            <select class="form-select" id="subscription_plan_id" name="subscription_plan_id">
+              <option value="">Select an existing plan</option>
+              <% if (plans && plans.length) { %>
+                <% plans.forEach(plan => { %>
+                  <option value="<%= plan.id %>"><%= plan.plan_name %><% if (Number(plan.price || 0) > 0) { %> — ₹<%= Number(plan.price).toFixed(2) %><% } %></option>
+                <% }) %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label for="razorpay_plan_id" class="form-label">Razorpay Product Plan ID</label>
+            <input type="text" class="form-control" id="razorpay_plan_id" name="razorpay_plan_id" maxlength="255" pattern="plan_[A-Za-z0-9]+" placeholder="Optional — generated once from the recurring monthly amount when blank">
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-gold-admin">
+            <i class="fa-solid fa-cloud-arrow-up me-2"></i>Create Product
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,127 @@
+<%- include('partials/header', { title: 'Site Settings - Dev Darshan Live' }) %>
+<%- include('partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Global Site Settings</h2>
+      <p>Configure logo, contact information, Razorpay API credentials, advertising status, and maintenance mode.</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (success) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-circle-check me-2"></i><%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Settings Form -->
+  <div class="row">
+    <div class="col-lg-10">
+      <form action="/admin/settings" method="POST" enctype="multipart/form-data" class="form-dark">
+        
+        <h5 class="mb-4 text-warning border-bottom border-secondary pb-2">
+          <i class="fa-solid fa-circle-info me-2"></i>Basic Branding & Support
+        </h5>
+
+        <div class="row mb-4">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="site_name" class="form-label">Site Name</label>
+            <input type="text" class="form-control" id="site_name" name="site_name" value="<%= setting.site_name %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label d-block">Current Logo</label>
+            <div class="d-flex align-items-center gap-3">
+              <% if (setting.logo) { %>
+                <img src="<%= setting.logo %>" alt="Logo" class="rounded p-1 bg-dark border border-secondary" style="max-height: 50px;">
+              <% } %>
+              <div class="flex-grow-1">
+                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-5">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="support_email" class="form-label">Support Email</label>
+            <input type="email" class="form-control" id="support_email" name="support_email" value="<%= setting.support_email %>" required>
+          </div>
+          <div class="col-md-6">
+            <label for="support_phone" class="form-label">Support Phone</label>
+            <input type="text" class="form-control" id="support_phone" name="support_phone" value="<%= setting.support_phone %>" required>
+          </div>
+        </div>
+
+        <h5 class="mb-4 text-success border-bottom border-secondary pb-2">
+          <i class="fa-solid fa-credit-card me-2"></i>Razorpay Gateway Details
+        </h5>
+
+        <div class="row mb-5">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="razorpay_key_id" class="form-label">Razorpay Key ID</label>
+            <input type="text" class="form-control text-monospace" id="razorpay_key_id" name="razorpay_key_id" value="<%= setting.razorpay_key_id %>">
+            <div class="form-text text-muted">Test or live key id (e.g. rzp_test_...).</div>
+          </div>
+          <div class="col-md-6">
+            <label for="razorpay_secret" class="form-label">Razorpay Secret Key</label>
+            <input type="password" class="form-control" id="razorpay_secret" name="razorpay_secret" value="<%= setting.razorpay_secret %>" placeholder="••••••••••••••••••••••••">
+            <div class="form-text text-muted">Leave unchanged to keep existing secret.</div>
+          </div>
+        </div>
+
+        <h5 class="mb-4 text-info border-bottom border-secondary pb-2">
+          <i class="fa-solid fa-users me-2"></i>Referral & Commission Settings
+        </h5>
+
+        <div class="row mb-5">
+          <div class="col-md-6">
+            <label for="commission_percentage" class="form-label">Commission Percentage (%)</label>
+            <input type="number" step="0.01" min="0" max="100" class="form-control" id="commission_percentage" name="commission_percentage" value="<%= setting.commission_percentage || 10.00 %>" required>
+            <div class="form-text text-muted">Percent of payment credited to referrer user. (e.g. 10.00)</div>
+          </div>
+        </div>
+
+        <h5 class="mb-4 text-danger border-bottom border-secondary pb-2">
+          <i class="fa-solid fa-sliders me-2"></i>System Controls
+        </h5>
+
+        <div class="row mb-5">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="free_user_ads_enabled" class="form-label">Free User Advertisements</label>
+            <select class="form-select" id="free_user_ads_enabled" name="free_user_ads_enabled">
+              <option value="1" <%= setting.free_user_ads_enabled === 1 ? 'selected' : '' %>>Enabled</option>
+              <option value="0" <%= setting.free_user_ads_enabled === 0 ? 'selected' : '' %>>Disabled</option>
+            </select>
+            <div class="form-text text-muted">When enabled, users on the Free plan will be prompted with popup and banner ads.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="maintenance_mode" class="form-label">Maintenance Mode</label>
+            <select class="form-select" id="maintenance_mode" name="maintenance_mode">
+              <option value="0" <%= setting.maintenance_mode === 0 ? 'selected' : '' %>>Offline (Disabled)</option>
+              <option value="1" <%= setting.maintenance_mode === 1 ? 'selected' : '' %>>Online (Enabled)</option>
+            </select>
+            <div class="form-text text-muted text-danger fw-semibold">
+              <i class="fa-solid fa-triangle-exclamation me-1"></i>Warning: Enforcing maintenance mode will restrict all client API endpoints.
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin px-5 py-3">
+          <i class="fa-solid fa-floppy-disk me-2"></i>Save Settings
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,156 @@
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <% if (settings && settings.logo) { %>
+      <img src="<%= settings.logo %>" alt="Logo" style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%;">
+    <% } else { %>
+      <i class="fa-solid fa-om"></i>
+    <% } %>
+    <span>Dev Darshan Live</span>
+  </div>
+
+  <ul class="sidebar-menu">
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>"
+    >
+      <a href="/admin/dashboard">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'users' ? 'active' : '' %>"
+    >
+      <a href="/admin/users">
+        <i class="fa-solid fa-users"></i>
+        <span>User Management</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'categories' ? 'active' : '' %>"
+    >
+      <a href="/admin/categories">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>Categories</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'videos' ? 'active' : '' %>"
+    >
+      <a href="/admin/videos">
+        <i class="fa-solid fa-video"></i>
+        <span>Videos</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'plans' ? 'active' : '' %>"
+    >
+      <a href="/admin/plans">
+        <i class="fa-solid fa-receipt"></i>
+        <span>Subscription Plans</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'products' ? 'active' : '' %>"
+    >
+      <a href="/admin/products">
+        <i class="fa-solid fa-store"></i>
+        <span>Products</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'product_categories' ? 'active' : '' %>"
+    >
+      <a href="/admin/product-categories">
+        <i class="fa-solid fa-tags"></i>
+        <span>Product Categories</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'banners' ? 'active' : '' %>"
+    >
+      <a href="/admin/banners">
+        <i class="fa-solid fa-images"></i>
+        <span>Banners</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'ads' ? 'active' : '' %>"
+    >
+      <a href="/admin/ads">
+        <i class="fa-solid fa-rectangle-ad"></i>
+        <span>Advertisements</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'notifications' ? 'active' : '' %>"
+    >
+      <a href="/admin/notifications">
+        <i class="fa-solid fa-bell"></i>
+        <span>Notifications</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'enquiries' ? 'active' : '' %>"
+    >
+      <a href="/admin/enquiries">
+        <i class="fa-solid fa-envelope-open-text"></i>
+        <span>Contact Enquiries</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'commissions' ? 'active' : '' %>"
+    >
+      <a href="/admin/commissions">
+        <i class="fa-solid fa-indian-rupee-sign"></i>
+        <span>Commissions</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'reports' ? 'active' : '' %>"
+    >
+      <a href="/admin/reports">
+        <i class="fa-solid fa-chart-column"></i>
+        <span>Reports</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'withdrawals' ? 'active' : '' %>"
+    >
+      <a href="/admin/withdrawals">
+        <i class="fa-solid fa-money-bill-transfer"></i>
+        <span>Withdrawal Requests</span>
+      </a>
+    </li>
+    <li
+      class="<%= typeof activePage !== 'undefined' && activePage === 'settings' ? 'active' : '' %>"
+    >
+      <a href="/admin/settings">
+        <i class="fa-solid fa-gear"></i>
+        <span>Site Settings</span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <button type="button" class="theme-toggle" aria-label="Toggle theme">
+      <i class="fa-solid fa-sun"></i>
+      <span>Light mode</span>
+    </button>
+    <div
+      class="admin-info d-flex align-items-center justify-content-between mt-3"
+    >
+      <div>
+        <span class="admin-name"
+          ><%= typeof admin !== 'undefined' ? admin.name : 'Admin User' %></span
+        >
+        <span class="admin-role"
+          ><%= typeof admin !== 'undefined' ? (admin.role === 'super_admin' ?
+          'Super Admin' : 'Admin') : 'Administrator' %></span
+        >
+      </div>
+      <a href="/admin/logout" class="text-danger fs-5 ms-3" title="Sign Out">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </a>
+    </div>
+  </div>
+</div>

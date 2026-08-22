@@ -1,0 +1,80 @@
+<%- include('../partials/header', { title: 'Edit Ad - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Edit Advertisement Campaign</h2>
+      <p>Modify campaign properties, banners, and trigger logic schedules.</p>
+    </div>
+    <div>
+      <a href="/admin/ads" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Ads
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/ads/<%= ad.id %>/edit" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="title" class="form-label">Ad Campaign Title</label>
+          <input type="text" class="form-control" id="title" name="title" value="<%= ad.title %>" required>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label d-block">Current Banner Image</label>
+          <% if (ad.image) { %>
+            <div class="mb-2">
+              <img src="<%= ad.image %>" alt="<%= ad.title %>" class="rounded border border-secondary" style="max-width: 200px; height: auto;">
+            </div>
+          <% } else { %>
+            <div class="text-muted mb-2">No image uploaded.</div>
+          <% } %>
+          <label for="image" class="form-label">Replace Banner Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          <div class="form-text text-muted">Leave blank to keep existing banner. Allowed formats: PNG, JPG, JPEG, WEBP.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="redirect_url" class="form-label">Redirect Target URL</label>
+          <input type="url" class="form-control" id="redirect_url" name="redirect_url" value="<%= ad.redirect_url %>">
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label for="display_after_minutes" class="form-label">Display After X Minutes (Time Interval)</label>
+            <input type="number" min="1" class="form-control" id="display_after_minutes" name="display_after_minutes" value="<%= ad.display_after_minutes %>" required>
+          </div>
+          <div class="col-md-6">
+            <label for="display_after_videos" class="form-label">Display After X Videos (View Interval)</label>
+            <input type="number" min="1" class="form-control" id="display_after_videos" name="display_after_videos" value="<%= ad.display_after_videos %>" required>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="status" class="form-label">Campaign Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="1" <%= ad.status === 1 ? 'selected' : '' %>>Active / Enabled</option>
+            <option value="0" <%= ad.status === 0 ? 'selected' : '' %>>Inactive / Disabled</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-square-check me-2"></i>Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

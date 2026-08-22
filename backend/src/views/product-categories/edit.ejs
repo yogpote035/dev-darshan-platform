@@ -1,0 +1,67 @@
+<%- include('../partials/header', { title: 'Edit Product Category - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Edit Product Category: <%= category.name %></h2>
+      <p>Update the product category details, image and visibility.</p>
+    </div>
+    <div>
+      <a href="/admin/product-categories" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Categories
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/product-categories/<%= category.id %>/edit" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="name" class="form-label">Category Name</label>
+          <input type="text" class="form-control" id="name" name="name" value="<%= category.name %>" minlength="2" maxlength="150" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4" maxlength="2000"><%= category.description || '' %></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label d-block">Current Image</label>
+          <% if (category.image) { %>
+            <div class="mb-2">
+              <img src="<%= category.image %>" alt="<%= category.name %>" class="rounded border border-secondary" style="max-width: 200px; height: auto;">
+            </div>
+          <% } else { %>
+            <div class="text-muted mb-2">No image uploaded.</div>
+          <% } %>
+          <label for="image" class="form-label">Replace Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          <div class="form-text text-muted">Leave blank to keep the current image.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="active" class="form-label">Status</label>
+          <select class="form-select" id="active" name="active">
+            <option value="1" <%= category.active ? 'selected' : '' %>>Active</option>
+            <option value="0" <%= category.active ? '' : 'selected' %>>Inactive</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-square-check me-2"></i>Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

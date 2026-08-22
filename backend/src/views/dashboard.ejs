@@ -1,0 +1,238 @@
+<%- include('partials/header', { title: 'Dashboard - Dev Darshan Live' }) %>
+<%- include('partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Welcome Back, <%= admin.name %></h2>
+      <p>Here is what's happening on the Dev Darshan Live platform today.</p>
+    </div>
+    <div>
+      <a href="/admin/videos/add" class="btn btn-gold-admin">
+        <i class="fa-solid fa-plus me-2"></i>Add Live Stream
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
+      <div class="dashboard-card">
+        <div class="card-icon gold">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="card-value"><%= stats.totalUsers %></div>
+        <div class="card-label">Total Users</div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="dashboard-card">
+        <div class="card-icon green">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <div class="card-value"><%= stats.premiumUsers %></div>
+        <div class="card-label">Premium Subscribers</div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="dashboard-card">
+        <div class="card-icon blue">
+          <i class="fa-solid fa-indian-rupee-sign"></i>
+        </div>
+        <div class="card-value">₹<%= stats.totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 2 }) %></div>
+        <div class="card-label">Total Revenue</div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="dashboard-card">
+        <div class="card-icon red">
+          <i class="fa-solid fa-video"></i>
+        </div>
+        <div class="card-value"><%= stats.totalVideos %></div>
+        <div class="card-label">Total Streams/Videos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-6">
+      <div class="dashboard-card h-100">
+        <h5 class="mb-4"><i class="fa-solid fa-chart-line me-2 text-warning"></i>User Registrations (6 Months)</h5>
+        <div style="position: relative; height:300px; width:100%">
+          <canvas id="userChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="dashboard-card h-100">
+        <h5 class="mb-4"><i class="fa-solid fa-chart-column me-2 text-success"></i>Revenue Collection (6 Months)</h5>
+        <div style="position: relative; height:300px; width:100%">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Logs Row -->
+  <div class="row g-4">
+    <!-- Recent Users -->
+    <div class="col-lg-6">
+      <div class="dashboard-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="m-0"><i class="fa-solid fa-user-plus me-2 text-info"></i>Recent Registered Users</h5>
+          <a href="/admin/users" class="btn btn-sm btn-outline-secondary">View All</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle border-0 m-0">
+            <thead>
+              <tr class="text-muted">
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Current Plan</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentUsers && recentUsers.length > 0) { %>
+                <% recentUsers.forEach(user => { %>
+                  <tr>
+                    <td><%= user.full_name %></td>
+                    <td><%= user.phone %></td>
+                    <td>
+                      <% const dashboardPlanName = user.Plan ? user.Plan.plan_name : 'Free'; %>
+                      <% const dashboardPlanClass = dashboardPlanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); %>
+                      <span class="subscription-plan subscription-plan-<%= dashboardPlanClass %>"><%= dashboardPlanName %></span>
+                    </td>
+                    <td>
+                      <span class="badge-status <%= user.status === 'active' ? 'active' : 'blocked' %>">
+                        <%= user.status %>
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No users found.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="col-lg-6">
+      <div class="dashboard-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="m-0"><i class="fa-solid fa-receipt me-2 text-success"></i>Recent Payments</h5>
+          <a href="/admin/enquiries" class="btn btn-sm btn-outline-secondary" style="visibility:hidden">View All</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle border-0 m-0">
+            <thead>
+              <tr class="text-muted">
+                <th>User</th>
+                <th>Order ID</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentPayments && recentPayments.length > 0) { %>
+                <% recentPayments.forEach(payment => { %>
+                  <tr>
+                    <td><%= payment.User ? payment.User.full_name : 'Unknown' %></td>
+                    <td><small class="payment-order-id"><%= payment.razorpay_order_id %></small></td>
+                    <td>₹<%= parseFloat(payment.amount).toFixed(2) %></td>
+                    <td>
+                      <% if (payment.payment_status === 'success') { %>
+                        <span class="badge bg-success">Success</span>
+                      <% } else if (payment.payment_status === 'pending') { %>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                      <% } else { %>
+                        <span class="badge bg-danger">Failed</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No payments found.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 1. User registrations chart
+    const userCtx = document.getElementById('userChart').getContext('2d');
+    new Chart(userCtx, {
+      type: 'line',
+      data: {
+        labels: <%- JSON.stringify(chart.labels) %>,
+        datasets: [{
+          label: 'New Users',
+          data: <%- JSON.stringify(chart.signups) %>,
+          borderColor: '#d97706',
+          backgroundColor: 'rgba(217, 119, 6, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a1a1aa' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a1a1aa', stepSize: 1 } }
+        }
+      }
+    });
+
+    // 2. Revenue collection chart
+    const revCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revCtx, {
+      type: 'bar',
+      data: {
+        labels: <%- JSON.stringify(chart.labels) %>,
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: <%- JSON.stringify(chart.revenue) %>,
+          backgroundColor: 'rgba(34, 197, 94, 0.65)',
+          borderColor: '#22c55e',
+          borderWidth: 1,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a1a1aa' } },
+          y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a1a1aa' } }
+        }
+      }
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

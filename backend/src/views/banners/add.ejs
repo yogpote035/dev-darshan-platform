@@ -1,0 +1,62 @@
+<%- include('../partials/header', { title: 'Add Banner - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Add New Banner</h2>
+      <p>Upload a promotional or devotional banner slider image.</p>
+    </div>
+    <div>
+      <a href="/admin/banners" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Banners
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/banners/add" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="title" class="form-label">Banner Title</label>
+          <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Kedarnath Dham Aarti Broadcast" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="image" class="form-label">Banner Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+          <div class="form-text text-muted">Recommended size: 1200x500px (Wide landscape). Allowed formats: PNG, JPG, JPEG, WEBP.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="link" class="form-label">Click Link / Route</label>
+          <input type="text" class="form-control" id="link" name="link" placeholder="e.g. /video/2 or custom external URL">
+          <div class="form-text text-muted">When user clicks the slider banner, they will navigate here.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload Banner
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

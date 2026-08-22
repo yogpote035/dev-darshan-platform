@@ -1,0 +1,59 @@
+<%- include('../partials/header', { title: 'Add Product Category - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Add Product Category</h2>
+      <p>Create a new product group to organize your devotional store catalog.</p>
+    </div>
+    <div>
+      <a href="/admin/product-categories" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Categories
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/product-categories/add" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="name" class="form-label">Category Name</label>
+          <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Spiritual Essentials" minlength="2" maxlength="150" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4" maxlength="2000" placeholder="Describe this product category..."></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="image" class="form-label">Category Image</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          <div class="form-text text-muted">Recommended size: 300x200px. Allowed formats: PNG, JPG, JPEG, WEBP.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="active" class="form-label">Status</label>
+          <select class="form-select" id="active" name="active">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i>Create Category
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

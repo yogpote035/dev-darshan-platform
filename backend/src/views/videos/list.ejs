@@ -1,0 +1,126 @@
+<%- include('../partials/header', { title: 'Videos - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Video & Stream Management</h2>
+      <p>Configure live streams (YouTube live feeds) and recorded Darshan content.</p>
+    </div>
+    <div>
+      <a href="/admin/videos/add" class="btn btn-gold-admin">
+        <i class="fa-solid fa-plus me-2"></i>Add Video / Live Stream
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (success) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-circle-check me-2"></i><%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Videos Table -->
+  <div class="table-dark-custom">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle m-0">
+        <thead>
+          <tr>
+            <th>Video Info</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Views</th>
+            <th>Status</th>
+            <th>Featured</th>
+            <th>Created At</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (videos && videos.length > 0) { %>
+            <% videos.forEach(video => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="thumbnail-wrapper me-3">
+                      <% if (video.thumbnail) { %>
+                        <img src="<%= video.thumbnail %>" alt="<%= video.title %>" class="rounded border border-secondary" style="width: 80px; height: 45px; object-fit: cover;">
+                      <% } else { %>
+                        <div class="bg-secondary rounded border border-secondary d-flex align-items-center justify-content-center text-muted" style="width: 80px; height: 45px; font-size: 0.75rem;">
+                          No Thumbnail
+                        </div>
+                      <% } %>
+                    </div>
+                    <div>
+                      <span class="fw-semibold d-block text-truncate" style="max-width: 250px;"><%= video.title %></span>
+                      <small class="text-muted"><%= video.youtube_id %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= video.Category ? video.Category.category_name : 'Uncategorized' %></span>
+                </td>
+                <td>
+                  <% if (video.is_live === 1) { %>
+                    <span class="badge bg-danger"><i class="fa-solid fa-circle-play me-1"></i>LIVE</span>
+                  <% } else { %>
+                    <span class="badge bg-primary">RECORDED</span>
+                  <% } %>
+                </td>
+                <td>
+                  <i class="fa-solid fa-eye me-1 video-views-icon"></i><%= video.total_views %>
+                </td>
+                <td>
+                  <a href="/admin/videos/<%= video.id %>/toggle" class="text-decoration-none">
+                    <span class="badge-status <%= video.status === 1 ? 'active' : 'inactive' %>">
+                      <%= video.status === 1 ? 'ACTIVE' : 'INACTIVE' %>
+                    </span>
+                  </a>
+                </td>
+                <td>
+                  <% if (video.featured === 1) { %>
+                    <span class="video-featured"><i class="fa-solid fa-star"></i> Featured</span>
+                  <% } else { %>
+                    <span class="video-standard">Standard</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% const created = new Date(video.created_at); %>
+                  <%= created.toLocaleDateString('en-IN') %>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex">
+                    <a href="/admin/videos/<%= video.id %>/edit" class="btn-action btn-edit" title="Edit Video">
+                      <i class="fa-solid fa-pen-to-square text-warning"></i>
+                    </a>
+                    <a href="/admin/videos/<%= video.id %>/delete" class="btn-action btn-delete" title="Delete Video" onclick="return confirm('Are you sure you want to delete this video?')">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-video-slash fs-2 mb-3 d-block"></i>
+                No videos or streams found. Click "Add Video" to get started.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

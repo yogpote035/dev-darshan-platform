@@ -1,0 +1,95 @@
+<%- include('../partials/header', { title: 'Add Video - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Add New Video / Stream</h2>
+      <p>Configure a live broadcast stream or regular content from YouTube.</p>
+    </div>
+    <div>
+      <a href="/admin/videos" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Videos
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/videos/add" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="title" class="form-label">Video Title</label>
+          <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Kedarnath Aarti Live" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4" placeholder="Brief details about this Darshan stream..."></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="category_id" class="form-label">Category</label>
+          <select class="form-select" id="category_id" name="category_id">
+            <option value="">Select a Category (Optional)</option>
+            <% if (categories && categories.length > 0) { %>
+              <% categories.forEach(category => { %>
+                <option value="<%= category.id %>"><%= category.category_name %></option>
+              <% }) %>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="youtube_url" class="form-label">YouTube URL</label>
+          <input type="url" class="form-control" id="youtube_url" name="youtube_url" placeholder="e.g. https://www.youtube.com/watch?v=xxxxxx" required>
+          <div class="form-text text-muted">Supports full links, mobile links (youtu.be), or embed links. Video ID will be extracted automatically.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="thumbnail" class="form-label">Custom Thumbnail</label>
+          <input type="file" class="form-control" id="thumbnail" name="thumbnail" accept="image/*">
+          <div class="form-text text-muted">Optional. If not provided, we will automatically fetch the YouTube video cover thumbnail.</div>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <label for="is_live" class="form-label">Live Broadcast Status</label>
+            <select class="form-select" id="is_live" name="is_live">
+              <option value="0">Recorded Content (VOD)</option>
+              <option value="1">Dev Darshan Live Feed</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="featured" class="form-label">Featured on Homepage</label>
+            <select class="form-select" id="featured" name="featured">
+              <option value="0">Standard</option>
+              <option value="1">Featured</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+              <option value="1">Active / Published</option>
+              <option value="0">Draft / Hidden</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i>Publish Video
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

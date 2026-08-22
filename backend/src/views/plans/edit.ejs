@@ -1,0 +1,71 @@
+<%- include('../partials/header', { title: 'Edit Plan - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Edit Subscription Plan</h2>
+      <p>Modify duration, pricing, or description fields for this plan.</p>
+    </div>
+    <div>
+      <a href="/admin/plans" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Plans
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/plans/<%= plan.id %>/edit" method="POST" class="form-dark">
+        <div class="mb-4">
+          <label for="plan_name" class="form-label">Plan Name</label>
+          <input type="text" class="form-control" id="plan_name" name="plan_name" value="<%= plan.plan_name %>" required>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label for="price" class="form-label">Price (INR)</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="price" name="price" value="<%= parseFloat(plan.price).toFixed(2) %>" required>
+          </div>
+          <div class="col-md-6">
+            <label for="razorpay_plan_id" class="form-label">Razorpay Plan ID</label>
+            <input type="text" class="form-control" id="razorpay_plan_id" name="razorpay_plan_id" value="<%= plan.razorpay_plan_id || '' %>" placeholder="plan_xxxxxxxxxxxxxx">
+            <div class="form-text text-secondary">Required for automatic offer renewals.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="duration_days" class="form-label">Duration (Days)</label>
+            <input type="number" min="1" class="form-control" id="duration_days" name="duration_days" value="<%= plan.duration_days %>" required>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="3"><%= plan.description %></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="1" <%= plan.status === 1 ? 'selected' : '' %>>Active</option>
+            <option value="0" <%= plan.status === 0 ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-square-check me-2"></i>Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

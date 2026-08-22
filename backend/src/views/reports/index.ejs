@@ -1,0 +1,15 @@
+<%- include('../partials/header', { title: 'Reports - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="content-title"><h2>Commission Reports</h2><p>Download Excel reports for all commissions or a specific referrer.</p></div>
+  </div>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <div class="row g-4">
+    <div class="col-lg-6"><div class="dashboard-card report-card h-100"><h5>All User Commission Report</h5><p class="report-card-description">One Excel file containing every referral commission, payment status, and Razorpay references.</p><a class="btn btn-gold-admin" href="/admin/reports/commissions/download"><i class="fa-solid fa-file-excel me-2"></i>Download All Commissions</a></div></div>
+    <div class="col-lg-6"><div class="dashboard-card report-card h-100"><h5>User-wise Commission Report</h5><p class="report-card-description">Select a referrer to download only their earned commission records.</p><form id="user-report-form" class="form-dark"><label for="report-user" class="form-label">Referrer</label><select id="report-user" class="form-select" required><option value="">Select user</option><% users.forEach(user => { %><option value="<%= user.id %>"><%= user.full_name %> — <%= user.phone %></option><% }) %></select><button class="btn btn-gold-admin mt-3" type="submit"><i class="fa-solid fa-file-excel me-2"></i>Download User Report</button></form></div></div>
+  </div>
+</div>
+<script>document.getElementById('user-report-form').addEventListener('submit', function (event) { event.preventDefault(); const id = document.getElementById('report-user').value; if (id) window.location.href = '/admin/reports/commissions/user/' + encodeURIComponent(id) + '/download'; });</script>
+<%- include('../partials/footer') %>

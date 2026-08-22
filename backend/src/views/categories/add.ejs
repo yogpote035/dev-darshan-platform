@@ -1,0 +1,56 @@
+<%- include('../partials/header', { title: 'Add Category - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Add New Category</h2>
+      <p>Create a new category folder for grouping streams.</p>
+    </div>
+    <div>
+      <a href="/admin/categories" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Categories
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/categories/add" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="category_name" class="form-label">Category Name</label>
+          <input type="text" class="form-control" id="category_name" name="category_name" placeholder="e.g. Kedarnath Dham" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="image" class="form-label">Category Image / Banner</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          <div class="form-text text-muted">Recommended size: 300x200px. Allowed formats: PNG, JPG, JPEG, WEBP.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i>Create Category
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

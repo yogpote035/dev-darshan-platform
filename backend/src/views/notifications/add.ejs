@@ -1,0 +1,53 @@
+<%- include('../partials/header', { title: 'Compose Notification - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Compose Announcement</h2>
+      <p>Draft a message to push to all registered active user inboxes instantly.</p>
+    </div>
+    <div>
+      <a href="/admin/notifications" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to List
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/notifications/add" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="title" class="form-label">Notification Title</label>
+          <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Mahashivratri Special Aarti LIVE" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="message" class="form-label">Message Body</label>
+          <textarea class="form-control" id="message" name="message" rows="5" placeholder="Enter details, timings, or a description of this festival update..." required></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="image" class="form-label">Notification Image / Graphic</label>
+          <input type="file" class="form-control" id="image" name="image" accept="image/*">
+          <div class="form-text text-muted">Optional. A visual graphic displayed next to the message. PNG, JPG, JPEG, WEBP.</div>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-paper-plane me-2"></i>Dispatch Notification
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,104 @@
+<%- include('../partials/header', { title: 'Banners - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Homepage Banner Management</h2>
+      <p>Configure dynamic slider banners that users see on the top of the React homepage.</p>
+    </div>
+    <div>
+      <a href="/admin/banners/add" class="btn btn-gold-admin">
+        <i class="fa-solid fa-plus me-2"></i>Add Banner
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (success) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-circle-check me-2"></i><%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Banners Table -->
+  <div class="table-dark-custom">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle m-0">
+        <thead>
+          <tr>
+            <th>Banner Preview</th>
+            <th>Title</th>
+            <th>Target Link</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (banners && banners.length > 0) { %>
+            <% banners.forEach(banner => { %>
+              <tr>
+                <td>
+                  <% if (banner.image) { %>
+                    <img src="<%= banner.image %>" alt="<%= banner.title %>" class="rounded border border-secondary" style="width: 120px; height: 50px; object-fit: cover;">
+                  <% } else { %>
+                    <div class="bg-secondary rounded border border-secondary d-flex align-items-center justify-content-center text-muted" style="width: 120px; height: 50px; font-size: 0.75rem;">
+                      No Image
+                    </div>
+                  <% } %>
+                </td>
+                <td class="fw-semibold"><%= banner.title %></td>
+                <td>
+                  <% if (banner.link) { %>
+                    <a href="<%= banner.link %>" target="_blank" class="text-warning text-truncate d-inline-block" style="max-width: 200px;"><%= banner.link %></a>
+                  <% } else { %>
+                    <span class="text-muted">None</span>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/admin/banners/<%= banner.id %>/toggle" class="text-decoration-none">
+                    <span class="badge-status <%= banner.status === 1 ? 'active' : 'inactive' %>">
+                      <%= banner.status === 1 ? 'ACTIVE' : 'INACTIVE' %>
+                    </span>
+                  </a>
+                </td>
+                <td>
+                  <% const created = new Date(banner.created_at); %>
+                  <%= created.toLocaleDateString('en-IN') %>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex">
+                    <a href="/admin/banners/<%= banner.id %>/edit" class="btn-action btn-edit" title="Edit Banner">
+                      <i class="fa-solid fa-pen-to-square text-warning"></i>
+                    </a>
+                    <a href="/admin/banners/<%= banner.id %>/delete" class="btn-action btn-delete" title="Delete Banner" onclick="return confirm('Are you sure you want to delete this banner?')">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-images fs-2 mb-3 d-block"></i>
+                No banners found. Click "Add Banner" to upload one.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

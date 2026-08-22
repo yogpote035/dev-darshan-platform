@@ -1,0 +1,103 @@
+<%- include('../partials/header', { title: 'Edit Video - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="content-title">
+      <h2>Edit Video / Stream</h2>
+      <p>Modify metadata, links, categories, or stream settings.</p>
+    </div>
+    <div>
+      <a href="/admin/videos" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Videos
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <form action="/admin/videos/<%= video.id %>/edit" method="POST" enctype="multipart/form-data" class="form-dark">
+        <div class="mb-4">
+          <label for="title" class="form-label">Video Title</label>
+          <input type="text" class="form-control" id="title" name="title" value="<%= video.title %>" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4"><%= video.description %></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="category_id" class="form-label">Category</label>
+          <select class="form-select" id="category_id" name="category_id">
+            <option value="">Select a Category (Optional)</option>
+            <% if (categories && categories.length > 0) { %>
+              <% categories.forEach(category => { %>
+                <option value="<%= category.id %>" <%= video.category_id === category.id ? 'selected' : '' %>><%= category.category_name %></option>
+              <% }) %>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="youtube_url" class="form-label">YouTube URL</label>
+          <input type="url" class="form-control" id="youtube_url" name="youtube_url" value="<%= video.youtube_url %>" required>
+          <div class="form-text text-muted">Original URL. Extracted video ID: <strong><%= video.youtube_id %></strong></div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label d-block">Current Thumbnail</label>
+          <% if (video.thumbnail) { %>
+            <div class="mb-2">
+              <img src="<%= video.thumbnail %>" alt="Thumbnail" class="rounded border border-secondary" style="max-width: 200px; height: auto;">
+            </div>
+          <% } else { %>
+            <div class="text-muted mb-2">No thumbnail uploaded.</div>
+          <% } %>
+          <label for="thumbnail" class="form-label">Replace Thumbnail</label>
+          <input type="file" class="form-control" id="thumbnail" name="thumbnail" accept="image/*">
+          <div class="form-text text-muted">Leave blank to keep existing thumbnail. If you change the YouTube URL and leave this blank, the thumbnail will be refreshed from YouTube.</div>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <label for="is_live" class="form-label">Live Broadcast Status</label>
+            <select class="form-select" id="is_live" name="is_live">
+              <option value="0" <%= video.is_live === 0 ? 'selected' : '' %>>Recorded Content (VOD)</option>
+              <option value="1" <%= video.is_live === 1 ? 'selected' : '' %>>Dev Darshan Live Feed</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="featured" class="form-label">Featured on Homepage</label>
+            <select class="form-select" id="featured" name="featured">
+              <option value="0" <%= video.featured === 0 ? 'selected' : '' %>>Standard</option>
+              <option value="1" <%= video.featured === 1 ? 'selected' : '' %>>Featured</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+              <option value="1" <%= video.status === 1 ? 'selected' : '' %>>Active / Published</option>
+              <option value="0" <%= video.status === 0 ? 'selected' : '' %>>Draft / Hidden</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold-admin">
+          <i class="fa-solid fa-square-check me-2"></i>Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
