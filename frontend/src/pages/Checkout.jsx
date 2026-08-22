@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Loader, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { fetchCart, previewOrder, createOrder, verifyOrderPayment, setupProductSubscription, verifyProductSubscription } from '../services/productService';
@@ -35,6 +35,7 @@ const validateDeliveryDetails = (shipping) => {
 };
 
 const Checkout = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [cartItems, setCartItems] = useState([]);
     const [summary, setSummary] = useState(null);
@@ -89,7 +90,7 @@ const Checkout = () => {
                         razorpay_signature: subscriptionPayment.razorpay_signature
                     });
                     if (!verified.success) throw new Error(verified.message || 'Subscription authorization verification failed.');
-                    window.location.href = `/orders/${orderDetails.id}`;
+                    navigate(`/orders/${orderDetails.id}`);
                 } catch (verificationError) {
                     setProcessing(false);
                     setError(verificationError.response?.data?.message || verificationError.message || 'Subscription authorization could not be verified.');
@@ -163,7 +164,7 @@ const Checkout = () => {
                 }
 
                 alert('Order placed successfully. Automatic renewal requires live Razorpay authorization.');
-                window.location.href = '/products';
+                navigate('/products');
                 return;
             }
 
@@ -201,7 +202,7 @@ const Checkout = () => {
                             await openSubscriptionAuthorization(orderDetails);
                         } else {
                             alert('Order placed successfully.');
-                            window.location.href = '/products';
+                            navigate('/products');
                         }
                     } catch (verificationError) {
                         setError(verificationError.response?.data?.message || verificationError.message || 'Payment verification failed.');

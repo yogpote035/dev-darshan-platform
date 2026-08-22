@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import API from '../services/api';
 import BannerSlider from '../components/BannerSlider';
 import VideoCard from '../components/VideoCard';
@@ -18,28 +18,30 @@ const Home = () => {
   const [hasMoreVideos, setHasMoreVideos] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  const fetchFeed = useCallback(async () => {
+    setLoading(true);
+    setFeedError('');
+    try {
+      const response = await API.get('/home/feed');
+      if (response.data.success) {
+        setFeedData(response.data);
+        setLatestVideos(response.data.latestVideos);
+        setHasMoreVideos(response.data.latestVideos.length >= 10);
+      } else {
+        setFeedError(response.data.message || 'Unable to load the home feed.');
+      }
+    } catch (error) {
+      console.error('Error fetching home feed:', error);
+      setFeedError(error.response?.data?.message || 'Unable to load the home feed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Load consolidated feed
   useEffect(() => {
-    const fetchFeed = async () => {
-      try {
-        const response = await API.get('/home/feed');
-        if (response.data.success) {
-          setFeedData(response.data);
-          setLatestVideos(response.data.latestVideos);
-          setHasMoreVideos(response.data.latestVideos.length >= 10);
-        } else {
-          setFeedError(response.data.message || 'Unable to load the home feed.');
-        }
-      } catch (error) {
-        console.error('Error fetching home feed:', error);
-        setFeedError(error.response?.data?.message || 'Unable to load the home feed. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchFeed();
-  }, []);
+  }, [fetchFeed]);
 
   // Fetch more videos (infinite scroll/pagination)
   const loadMoreVideos = async () => {
@@ -102,7 +104,7 @@ const Home = () => {
         <p className="text-sm font-semibold">{feedError}</p>
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={fetchFeed}
           className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-amber-400"
         >
           Try again

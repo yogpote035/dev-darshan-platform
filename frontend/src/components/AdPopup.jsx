@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAds } from '../context/AdContext';
+import { useNavigate } from 'react-router-dom';
 import { X, ExternalLink } from 'lucide-react';
 import { getImageUrl } from '../utils/imageHelper';
 
 const AdPopup = () => {
+  const navigate = useNavigate();
   const { showAdPopup, currentAd, closeAd, premiumPlan } = useAds();
   const [countdown, setCountdown] = useState(5); // Show close button after 5 seconds
   const [canClose, setCanClose] = useState(false);
@@ -100,7 +102,7 @@ const AdPopup = () => {
           <p className="text-[11px] text-gray-400">
             Tired of ads?{' '}
             <button
-              onClick={() => { closeAd(); window.location.href = '/subscription'; }}
+              onClick={() => { closeAd(); navigate('/subscription'); }}
               className="text-amber-500 hover:text-amber-400 font-bold underline transition-colors"
             >
               Go Premium for ₹{premiumPrice}/{premiumDuration}
