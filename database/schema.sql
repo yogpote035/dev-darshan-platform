@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS live_darshan_db;
-USE live_darshan_db;
+CREATE DATABASE IF NOT EXISTS u360284363_livedarshan;
+USE u360284363_livedarshan;
 
 -- ==========================
 -- ADMINS

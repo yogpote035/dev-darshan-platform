@@ -1,4 +1,4 @@
-USE live_darshan_db;
+USE u360284363_livedarshan;
 
 -- ==========================
 -- DEFAULT PLANS
@@ -11,12 +11,12 @@ INSERT INTO subscription_plans (plan_name, price, duration_days, description, st
 
 -- ==========================
 -- DEFAULT ADMIN
--- Email: admin@livedarshan.com
+-- Email: admin@devdarshanlive.com
 -- Password: admin123
 -- Hash: $2b$10$RnILhElV3YYMP1FOeJh8Fesgabpr7n6ealHPO.mM8taxVlBmbn3d6
 -- ==========================
 INSERT INTO admins (name, email, password, role, status) VALUES
-('Super Admin', 'admin@livedarshan.com', '$2b$10$RnILhElV3YYMP1FOeJh8Fesgabpr7n6ealHPO.mM8taxVlBmbn3d6', 'super_admin', 1);
+('Super Admin', 'admin@devdarshanlive.com', '$2b$10$RnILhElV3YYMP1FOeJh8Fesgabpr7n6ealHPO.mM8taxVlBmbn3d6', 'super_admin', 1);
 
 -- ==========================
 -- DEFAULT APP SETTINGS
