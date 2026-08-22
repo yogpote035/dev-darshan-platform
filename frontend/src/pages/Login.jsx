@@ -108,6 +108,8 @@ const Login = () => {
           </button>
         </form>
 
+        <div className="mt-3 text-right"><Link to="/forgot-password" className="text-xs font-bold text-amber-500 hover:text-amber-400">Forgot password?</Link></div>
+
         <div className="mt-6 pt-6 border-t border-zinc-800/80 text-center">
           <p className="text-xs text-gray-400">
             Don't have an account?{' '}

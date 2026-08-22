@@ -3,6 +3,14 @@ const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const { validationResult } = require('express-validator');
 const { User, SubscriptionPlan } = require('../../models');
+const { buildIndianE164, sendPasswordResetCode, checkPasswordResetCode } = require('../../services/passwordResetService');
+
+const findUserByMobile = async (value) => {
+  const phone = buildIndianE164(value);
+  if (!phone) return null;
+  const mobile = phone.slice(-10);
+  return User.findOne({ where: { phone: { [Op.in]: [mobile, phone, `91${mobile}`] } } });
+};
 
 const register = async (req, res) => {
   try {
@@ -167,8 +175,55 @@ const profile = async (req, res) => {
   }
 };
 
+const requestPasswordReset = async (req, res) => {
+  try {
+    const phone = buildIndianE164(req.body.phone);
+    if (!phone) return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number.' });
+
+    const user = await findUserByMobile(phone);
+    // Do not reveal whether this mobile number is registered.
+    if (!user || user.status === 'blocked') {
+      return res.status(200).json({ success: true, message: 'If this mobile number is registered, a reset code has been sent.' });
+    }
+
+    await sendPasswordResetCode(phone);
+    return res.status(200).json({ success: true, message: 'A six-digit reset code has been sent by SMS.' });
+  } catch (error) {
+    console.error('requestPasswordReset error:', error.message);
+    const status = error.code === 'SMS_NOT_CONFIGURED' ? 503 : 500;
+    return res.status(status).json({ success: false, message: error.message || 'Unable to send the reset code. Please try again.' });
+  }
+};
+
+const confirmPasswordReset = async (req, res) => {
+  try {
+    const { phone: rawPhone, code, password, confirm_password } = req.body;
+    const phone = buildIndianE164(rawPhone);
+    if (!phone) return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian mobile number.' });
+    if (!/^\d{6}$/.test(String(code || ''))) return res.status(400).json({ success: false, message: 'Enter the six-digit SMS code.' });
+    if (String(password || '').length < 8) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long.' });
+    if (password !== confirm_password) return res.status(400).json({ success: false, message: 'Passwords do not match.' });
+
+    const user = await findUserByMobile(phone);
+    if (!user || user.status === 'blocked') return res.status(400).json({ success: false, message: 'Unable to reset this password. Please contact support.' });
+
+    const verification = await checkPasswordResetCode(phone, String(code));
+    if (verification.status !== 'approved') return res.status(400).json({ success: false, message: 'The reset code is invalid or has expired. Request a new code.' });
+
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
+    return res.status(200).json({ success: true, message: 'Password changed successfully. Please sign in.' });
+  } catch (error) {
+    console.error('confirmPasswordReset error:', error.message);
+    const status = error.code === 'SMS_NOT_CONFIGURED' ? 503 : 500;
+    return res.status(status).json({ success: false, message: error.message || 'Unable to reset the password. Please try again.' });
+  }
+};
+
 module.exports = {
   register,
   login,
-  profile
+  profile,
+  requestPasswordReset,
+  confirmPasswordReset
 };

@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
 import Refer from './pages/Refer';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -33,7 +34,7 @@ import AdPopup from './components/AdPopup';
 // Layout manager to hide navigation bars on Auth Screens (Login / Register)
 const AppLayout = ({ children }) => {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password';
 
   return (
     <div className="flex flex-col min-h-screen bg-bgDark">
@@ -89,6 +90,7 @@ function App() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-conditions" element={<TermsConditions />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
