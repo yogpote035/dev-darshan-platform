@@ -1,0 +1,17 @@
+<%- include('../partials/header', { title: 'Update User Plan - Dev Darshan Live' }) %>
+<%- include('../partials/sidebar') %>
+<div class="main-content">
+  <div class="content-header"><div class="content-title"><h2>Update User Plan</h2><p><%= user.full_name %> · <%= user.phone %></p></div></div>
+  <div class="dashboard-card p-4" style="max-width: 680px;">
+    <form action="/admin/users/<%= user.id %>/plan" method="POST" class="form-dark">
+      <label class="form-label fw-bold">Subscription plan</label>
+      <select name="plan_id" class="form-select mb-3" required>
+        <% plans.forEach(plan => { %><option value="<%= plan.id %>" <%= user.plan_id === plan.id ? 'selected' : '' %>><%= plan.plan_name %> — ₹<%= Number(plan.price).toFixed(2) %> / <%= plan.duration_days %> days</option><% }) %>
+      </select>
+      <p class="text-muted small">This is an access-only admin grant. It does not change, create, or cancel the customer's Razorpay Autopay mandate. Their next Autopay charge remains the amount of their original mandate.</p>
+      <button class="btn btn-gold-admin" type="submit"><i class="fa-solid fa-check me-2"></i>Update Plan</button>
+      <a href="/admin/users" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { PaymentWebhookEvent, ProductSubscription, Payment, Product, SubscriptionPlan, Subscription, User } = require('../../models');
 const { getRazorpayConfig, verifySignature } = require('../../services/razorpayService');
 const { mapRazorpayStatus } = require('./productSubscriptionController');
+const { addReferralCommission } = require('./paymentController');
 
 const getEntity = (payload, key) => payload?.payload?.[key]?.entity || null;
 
@@ -65,6 +66,35 @@ const handleRazorpayWebhook = async (req, res) => {
         const subscriptionId = subscriptionEntity?.id || paymentEntity?.subscription_id;
 
         if (subscriptionId) {
+            // App-plan Autopay: only a successful recurring charge extends premium
+            // and earns referral commission. Authorization never earns commission.
+            const appSubscription = await Subscription.findOne({ where: { razorpay_subscription_id: subscriptionId } });
+            if (appSubscription) {
+                const appUser = await User.findByPk(appSubscription.user_id);
+                const appPlan = await SubscriptionPlan.findByPk(appSubscription.plan_id);
+                if (eventType === 'subscription.charged' && appUser && appPlan && paymentEntity?.id) {
+                    const existing = await Payment.findOne({ where: { razorpay_payment_id: paymentEntity.id } });
+                    if (!existing) {
+                        const paidAmount = Number(paymentEntity.amount || 0) / 100;
+                        if (Math.abs(paidAmount - Number(appPlan.price)) > 0.001) throw new Error('Unexpected Autopay charge amount.');
+                        const payment = await Payment.create({ user_id: appUser.id, subscription_id: appSubscription.id, payment_type: 'subscription', payment_method: paymentEntity.method || 'razorpay', payment_status: 'success', amount: paidAmount, razorpay_subscription_id: subscriptionId, razorpay_payment_id: paymentEntity.id });
+                        const start = new Date(); const end = new Date(start); end.setDate(end.getDate() + Number(appPlan.duration_days));
+                        appSubscription.start_date = start; appSubscription.end_date = end; appSubscription.status = 'active';
+                        // An administrator may have granted a different access plan.
+                        // A renewal must never overwrite that choice or change what the
+                        // customer is charged: Razorpay continues using this mandate's
+                        // original plan and amount.
+                        appUser.subscription_expiry = end; await appUser.save();
+                        await addReferralCommission(appUser, payment, paidAmount);
+                    }
+                } else if (eventType === 'payment.failed') {
+                    appSubscription.status = 'cancelled'; appSubscription.cancelled_at = new Date();
+                    if (appUser) { const free = await SubscriptionPlan.findOne({ where: { price: 0, status: 1 }, order: [['id', 'ASC']] }); appUser.plan_id = free?.id || 1; appUser.subscription_expiry = new Date(); await appUser.save(); }
+                } else if (subscriptionEntity?.status === 'cancelled') {
+                    appSubscription.status = 'cancelled'; appSubscription.cancelled_at = new Date();
+                }
+                await appSubscription.save();
+            }
             const subscription = await ProductSubscription.findOne({ where: { razorpay_subscription_id: subscriptionId } });
             if (subscription) {
                 if (eventType === 'subscription.charged') {

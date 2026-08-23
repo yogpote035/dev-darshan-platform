@@ -21,6 +21,119 @@ const getRazorpayInstance = async () => {
   };
 };
 
+const TRIAL_DAYS = 30;
+
+const getPaidPlan = async (planId) => {
+  const plan = await SubscriptionPlan.findByPk(planId);
+  if (!plan || plan.status !== 1 || Number(plan.price) <= 0) return null;
+  return plan;
+};
+
+const addReferralCommission = async (user, payment, amount) => {
+  if (!user.referred_by || Number(amount) <= 0) return;
+  const referrer = await User.findByPk(user.referred_by);
+  if (!referrer) return;
+  const settings = await Setting.findOne();
+  const commissionPercent = Number.isFinite(Number.parseFloat(settings?.commission_percentage)) ? Number.parseFloat(settings.commission_percentage) : 10;
+  const commissionAmount = Number(((Number(amount) * commissionPercent) / 100).toFixed(2));
+  if (!commissionAmount) return;
+  referrer.wallet_balance = Number((Number(referrer.wallet_balance || 0) + commissionAmount).toFixed(2));
+  await referrer.save();
+  await Commission.create({ referrer_id: referrer.id, referred_id: user.id, payment_id: payment.id, amount: commissionAmount, commission_percentage: commissionPercent });
+};
+
+const activateTrial = async (user, plan, razorpaySubscriptionId) => {
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + TRIAL_DAYS);
+  const subscription = await Subscription.create({ user_id: user.id, plan_id: plan.id, amount: plan.price, start_date: startDate, end_date: endDate, status: 'active', razorpay_subscription_id: razorpaySubscriptionId, auto_pay_required: true });
+  user.plan_id = plan.id;
+  user.subscription_expiry = endDate;
+  await user.save();
+  return subscription;
+};
+
+// Paid plans use a Razorpay Subscription, never a one-time order.  The Razorpay
+// plan must be configured with the matching amount and 3-month/yearly frequency.
+const createSubscription = async (req, res) => {
+  try {
+    const plan = await getPaidPlan(req.body.plan_id);
+    if (!plan) return res.status(404).json({ success: false, message: 'Select an active paid plan.' });
+    const { isMock, keyId, instance } = await getRazorpayInstance();
+    // Razorpay Plans are immutable. Create the correct recurring plan once and
+    // persist its ID, so an admin does not need to manually copy a plan_ ID.
+    if (!isMock && !plan.razorpay_plan_id) {
+      const isYearly = Number(plan.duration_days) >= 365;
+      const razorpayPlan = await instance.plans.create({
+        period: isYearly ? 'yearly' : 'monthly',
+        interval: isYearly ? 1 : 3,
+        item: {
+          name: `Dev Darshan Live ${plan.plan_name}`,
+          description: `${plan.plan_name} Premium membership`,
+          amount: Math.round(Number(plan.price) * 100),
+          currency: 'INR'
+        }
+      });
+      plan.razorpay_plan_id = razorpayPlan.id;
+      await plan.save();
+    }
+    const startAt = Math.floor((Date.now() + TRIAL_DAYS * 86400000) / 1000);
+    if (isMock) return res.json({ success: true, isMock: true, key: 'mock_key_id', subscription_id: `sub_mock_${uuidv4().replace(/-/g, '').slice(0, 18)}`, plan });
+    // Razorpay caps total_count at 100 for these recurring plan intervals.
+    // This still provides 25 years of quarterly billing or 100 years of yearly billing.
+    const subscription = await instance.subscriptions.create({ plan_id: plan.razorpay_plan_id, total_count: 100, start_at: startAt, customer_notify: 1, notes: { user_id: String(req.user.id), plan_id: String(plan.id), trial_days: String(TRIAL_DAYS) } });
+    return res.json({ success: true, isMock: false, key: keyId, subscription_id: subscription.id, plan });
+  } catch (error) {
+    console.error('createSubscription error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to start Autopay setup.' });
+  }
+};
+
+const verifySubscription = async (req, res) => {
+  try {
+    const { plan_id, razorpay_subscription_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const plan = await getPaidPlan(plan_id);
+    if (!plan || !razorpay_subscription_id || !razorpay_payment_id) return res.status(400).json({ success: false, message: 'Missing Autopay authorization details.' });
+    const existing = await Subscription.findOne({ where: { razorpay_subscription_id } });
+    if (existing) return res.json({ success: true, message: 'Autopay is already active.', subscription: existing });
+    const { isMock, secret } = await getRazorpayInstance();
+    const verified = isMock ? razorpay_subscription_id.startsWith('sub_mock_') : Boolean(razorpay_signature) && crypto.createHmac('sha256', secret).update(`${razorpay_payment_id}|${razorpay_subscription_id}`).digest('hex') === razorpay_signature;
+    if (!verified) return res.status(400).json({ success: false, message: 'Autopay authorization could not be verified.' });
+    const user = await User.findByPk(req.user.id);
+    const subscription = await activateTrial(user, plan, razorpay_subscription_id);
+    return res.json({ success: true, message: `Autopay is enabled. Premium is free until ${subscription.end_date.toLocaleDateString('en-IN')}.`, subscription });
+  } catch (error) {
+    console.error('verifySubscription error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to confirm Autopay.' });
+  }
+};
+
+const cancelSubscription = async (req, res) => {
+  try {
+    const subscription = await Subscription.findOne({ where: { id: req.params.id, user_id: req.user.id, status: 'active', auto_pay_required: true } });
+    if (!subscription) return res.status(404).json({ success: false, message: 'Active Autopay subscription not found.' });
+    const { isMock, instance } = await getRazorpayInstance();
+    if (!isMock) await instance.subscriptions.cancel(subscription.razorpay_subscription_id, false);
+    subscription.status = 'cancelled'; subscription.cancelled_at = new Date(); await subscription.save();
+    const user = await User.findByPk(req.user.id);
+    const freePlan = await SubscriptionPlan.findOne({ where: { price: 0, status: 1 }, order: [['id', 'ASC']] });
+    user.plan_id = freePlan?.id || 1; user.subscription_expiry = new Date(); await user.save();
+    return res.json({ success: true, message: 'Autopay is cancelled and Premium access has ended.' });
+  } catch (error) {
+    console.error('cancelSubscription error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to cancel Autopay.' });
+  }
+};
+
+const getMyAutoPaySubscription = async (req, res) => {
+  try {
+    const subscription = await Subscription.findOne({ where: { user_id: req.user.id, auto_pay_required: true, status: 'active' }, order: [['created_at', 'DESC']], include: [{ model: SubscriptionPlan }] });
+    return res.json({ success: true, subscription });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Unable to load Autopay status.' });
+  }
+};
+
 const createOrder = async (req, res) => {
   try {
     const { plan_id } = req.body;
@@ -287,5 +400,10 @@ const recoverPayment = async (req, res) => {
 module.exports = {
   createOrder,
   verifyPayment,
-  recoverPayment
+  recoverPayment,
+  createSubscription,
+  verifySubscription,
+  cancelSubscription,
+  getMyAutoPaySubscription,
+  addReferralCommission
 };

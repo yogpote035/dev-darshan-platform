@@ -88,9 +88,38 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const getEditUserPlan = async (req, res) => {
+  try {
+    const [user, plans] = await Promise.all([User.findByPk(req.params.id), SubscriptionPlan.findAll({ where: { status: 1 }, order: [['price', 'ASC']] })]);
+    if (!user) return res.redirect('/admin/users?error=User+not+found');
+    return res.render('users/plan', { activePage: 'users', user, plans, error: null });
+  } catch (error) {
+    console.error('getEditUserPlan error:', error);
+    return res.redirect('/admin/users?error=Unable+to+open+plan+editor');
+  }
+};
+
+const postEditUserPlan = async (req, res) => {
+  try {
+    const [user, plan] = await Promise.all([User.findByPk(req.params.id), SubscriptionPlan.findOne({ where: { id: req.body.plan_id, status: 1 } })]);
+    if (!user || !plan) return res.redirect(`/admin/users/${req.params.id}/plan?error=Select+an+active+plan`);
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + Number(plan.duration_days || 0));
+    user.plan_id = plan.id;
+    user.subscription_expiry = endDate;
+    await user.save();
+    return res.redirect('/admin/users?success=User+plan+updated+successfully');
+  } catch (error) {
+    console.error('postEditUserPlan error:', error);
+    return res.redirect('/admin/users?error=Unable+to+update+user+plan');
+  }
+};
+
 module.exports = {
   getUsers,
   blockUser,
   activateUser,
-  deleteUser
+  deleteUser,
+  getEditUserPlan,
+  postEditUserPlan
 };

@@ -15,6 +15,7 @@ const Subscription = () => {
   const [checkingOut, setCheckingOut] = useState(null); // stores plan_id being purchased
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [autoPaySubscription, setAutoPaySubscription] = useState(null);
 
   // Load plans
   useEffect(() => {
@@ -33,7 +34,16 @@ const Subscription = () => {
     };
 
     fetchPlans();
+    if (isAuthenticated) API.get('/payments/subscriptions/current').then(({ data }) => setAutoPaySubscription(data.subscription || null)).catch(() => {});
   }, []);
+
+  const cancelAutoPay = async () => {
+    if (!autoPaySubscription || !window.confirm('Cancel Autopay now? Premium access will end immediately.')) return;
+    try {
+      const { data } = await API.post(`/payments/subscriptions/${autoPaySubscription.id}/cancel`);
+      setAutoPaySubscription(null); setSuccess(data.message); await refreshUser();
+    } catch (err) { setError(err.response?.data?.message || 'Unable to cancel Autopay.'); }
+  };
 
   // Inject Razorpay Checkout Script
   const loadRazorpayScript = () => {
@@ -44,22 +54,6 @@ const Subscription = () => {
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
-  };
-
-  const confirmPayment = async (paymentDetails, plan) => {
-    try {
-      return await API.post('/payments/verify', {
-        ...paymentDetails,
-        plan_id: plan.id
-      });
-    } catch (verificationError) {
-      // Razorpay may have captured the money even when the first API request timed out.
-      return API.post('/payments/recover', {
-        razorpay_order_id: paymentDetails.razorpay_order_id,
-        razorpay_payment_id: paymentDetails.razorpay_payment_id,
-        plan_id: plan.id
-      });
-    }
   };
 
   const handleCheckout = async (plan) => {
@@ -78,8 +72,9 @@ const Subscription = () => {
     setCheckingOut(plan.id);
 
     try {
-      // 1. Create order on backend
-      const orderRes = await API.post('/payments/create-order', { plan_id: plan.id });
+      // Paid plans always require a Razorpay Autopay mandate. The first 30 days
+      // are Premium at no cost; the first plan charge happens after that trial.
+      const orderRes = await API.post('/payments/create-subscription', { plan_id: plan.id });
       if (!orderRes.data.success) {
         throw new Error(orderRes.data.message || 'Error creating order.');
       }
@@ -91,13 +86,13 @@ const Subscription = () => {
         setSuccess('Simulating sandbox checkout payment...');
         setTimeout(async () => {
           try {
-            const verifyRes = await API.post('/payments/verify', {
-              razorpay_order_id: orderData.order_id,
+            const verifyRes = await API.post('/payments/verify-subscription', {
+              razorpay_subscription_id: orderData.subscription_id,
               razorpay_payment_id: `pay_mock_${Math.random().toString(36).substring(7)}`,
               plan_id: plan.id
             });
             if (verifyRes.data.success) {
-              setSuccess('Subscription upgraded successfully! Enjoy ad-free premium broadcasts.');
+              setSuccess('Autopay enabled. Your first month of Premium is free.');
               await refreshUser();
             } else {
               setError('Simulated verification failed.');
@@ -119,24 +114,32 @@ const Subscription = () => {
         return;
       }
 
+      let razorpayInstance;
+      const closeRazorpay = () => {
+        try { razorpayInstance?.close(); } catch (_) { /* Checkout may already be closed. */ }
+      };
       const options = {
         key: orderData.key,
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Dev Darshan Live Platform',
-        description: `${plan.plan_name} Plan Subscription`,
-        order_id: orderData.order_id,
+        description: `${plan.plan_name} Plan — first month free, then Autopay`,
+        subscription_id: orderData.subscription_id,
         handler: async (response) => {
+          // Close the QR/UPI overlay before waiting for server verification.
+          // Otherwise the modal can remain over the app after a successful scan.
+          closeRazorpay();
           setCheckingOut(plan.id);
           try {
-            const verifyRes = await confirmPayment({
-              razorpay_order_id: response.razorpay_order_id,
+            const verifyRes = await API.post('/payments/verify-subscription', {
+              razorpay_subscription_id: response.razorpay_subscription_id || orderData.subscription_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-            }, plan);
+              plan_id: plan.id
+            });
 
             if (verifyRes.data.success) {
-              setSuccess('Payment successful! Your premium subscription is active.');
+              setSuccess('Autopay enabled. Your first month of Premium is free.');
               await refreshUser();
             } else {
               setError('Payment verification failed.');
@@ -151,45 +154,30 @@ const Subscription = () => {
           name: user.full_name,
           contact: user.phone
         },
+        // Show Razorpay's UPI Autopay flow, including UPI-ID/VPA entry whenever
+        // the merchant account has UPI subscriptions enabled.
+        method: {
+          upi: true
+        },
         theme: {
           color: '#d97706' // Amber Gold theme color for checkout window
         },
         modal: {
           ondismiss: () => {
+            closeRazorpay();
             setCheckingOut(null);
           }
         }
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', async (response) => {
+      razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on('payment.failed', async (response) => {
         const errorDetails = response.error || {};
-        if (errorDetails.reason !== 'order_already_paid') {
-          setCheckingOut(null);
-          setError(errorDetails.description || 'Payment could not be processed. Please try again.');
-          return;
-        }
-
-        try {
-          const recoveryRes = await API.post('/payments/recover', {
-            razorpay_order_id: errorDetails.metadata?.order_id || orderData.order_id,
-            razorpay_payment_id: errorDetails.metadata?.payment_id,
-            plan_id: plan.id
-          });
-
-          if (recoveryRes.data.success) {
-            setSuccess('Payment was received and your premium subscription is now active.');
-            await refreshUser();
-          } else {
-            setError(recoveryRes.data.message || 'Payment was received but is still being confirmed.');
-          }
-        } catch (recoveryError) {
-          setError('Payment was received, but confirmation is delayed. Please refresh your account shortly.');
-        } finally {
-          setCheckingOut(null);
-        }
+        closeRazorpay();
+        setCheckingOut(null);
+        setError(errorDetails.description || 'Autopay authorization was not completed. No premium plan was activated.');
       });
-      rzp.open();
+      razorpayInstance.open();
     } catch (err) {
       console.error('Checkout error:', err);
       setError(err.response?.data?.message || 'Error processing checkout order.');
@@ -282,10 +270,14 @@ const Subscription = () => {
                 </div>
               )}
 
+              {isUserCurrentPlan && autoPaySubscription?.plan_id === plan.id && (
+                <button onClick={cancelAutoPay} className="mt-3 w-full rounded-xl border border-red-500/40 py-2 text-xs font-bold text-red-300">Cancel Autopay and Premium</button>
+              )}
+
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h4 className="font-bold text-gray-100 text-base">{plan.plan_name}</h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{plan.duration_days} Days Validity</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">First month free · then ₹{parseFloat(plan.price)} every {plan.duration_days} days</p>
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-extrabold text-amber-500">₹{parseFloat(plan.price)}</span>
@@ -314,7 +306,7 @@ const Subscription = () => {
                 ) : (
                   <>
                     <CreditCard size={14} />
-                    <span>Subscribe Now</span>
+                  <span>Start free month · then ₹{parseFloat(plan.price)} every {plan.duration_days === 90 ? '3 months' : 'year'}</span>
                   </>
                 )}
               </button>

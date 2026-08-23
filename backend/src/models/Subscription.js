@@ -39,6 +39,19 @@ const Subscription = sequelize.define('Subscription', {
     type: DataTypes.ENUM('active', 'expired', 'cancelled'),
     defaultValue: 'active'
   },
+  razorpay_subscription_id: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    unique: true
+  },
+  auto_pay_required: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  cancelled_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

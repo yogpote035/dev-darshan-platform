@@ -147,6 +147,9 @@
                         <i class="fa-solid fa-circle-check text-success"></i>
                       </a>
                     <% } %>
+                    <a href="/admin/users/<%= user.id %>/plan" class="btn-action btn-edit" title="Change Plan">
+                      <i class="fa-solid fa-crown text-warning"></i>
+                    </a>
                     <a href="/admin/users/<%= user.id %>/delete" class="btn-action btn-delete" title="Delete User" onclick="return confirm('CRITICAL: This will permanently delete user records, payments, and history. Proceed?')">
                       <i class="fa-solid fa-trash-can"></i>
                     </a>

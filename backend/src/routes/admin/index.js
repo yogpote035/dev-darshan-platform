@@ -42,6 +42,8 @@ router.get('/dashboard', dashboardController.getDashboard);
 router.get('/users', userController.getUsers);
 router.get('/users/:id/block', userController.blockUser);
 router.get('/users/:id/activate', userController.activateUser);
+router.get('/users/:id/plan', userController.getEditUserPlan);
+router.post('/users/:id/plan', userController.postEditUserPlan);
 router.get('/users/:id/delete', userController.deleteUser);
 
 // Categories

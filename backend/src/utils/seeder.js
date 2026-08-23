@@ -60,29 +60,22 @@ const seedDatabase = async () => {
       {
         plan_name: 'Free',
         price: 0.00,
-        duration_days: 3650,
-        description: 'Enjoy free access to standard live streams and latest videos with ads.',
-        status: 1
-      },
-      {
-        plan_name: 'Monthly',
-        price: 99.00,
         duration_days: 30,
-        description: 'Ad-free premium access, high quality streams, and priority updates.',
+        description: '30 days of standard access with ads. No payment or Autopay is required.',
         status: 1
       },
       {
         plan_name: 'Quarterly',
-        price: 249.00,
+        price: 199.00,
         duration_days: 90,
-        description: 'Save 15% on premium dev darshan live across all channels. Ad-free experience.',
+        description: 'First month free, then ₹199 every 3 months by mandatory Razorpay Autopay. Ad-free Premium access.',
         status: 1
       },
       {
         plan_name: 'Yearly',
-        price: 899.00,
+        price: 499.00,
         duration_days: 365,
-        description: 'Best value! Ultimate year-long premium access to all live feeds. Ad-free.',
+        description: 'First month free, then ₹499 yearly by mandatory Razorpay Autopay. Ad-free Premium access.',
         status: 1
       }
     ]);

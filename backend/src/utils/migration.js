@@ -22,6 +22,14 @@ const runMigration = async () => {
       await sequelize.query("ALTER TABLE subscription_plans ADD COLUMN razorpay_plan_id VARCHAR(255) NULL AFTER price");
     }
 
+    const [subscriptionRazorpayCols] = await sequelize.query("SHOW COLUMNS FROM subscriptions LIKE 'razorpay_subscription_id'");
+    if (subscriptionRazorpayCols.length === 0) {
+      console.log('Adding Razorpay subscription fields...');
+      await sequelize.query("ALTER TABLE subscriptions ADD COLUMN razorpay_subscription_id VARCHAR(255) NULL UNIQUE AFTER status;");
+      await sequelize.query("ALTER TABLE subscriptions ADD COLUMN auto_pay_required TINYINT(1) NOT NULL DEFAULT 0 AFTER razorpay_subscription_id;");
+      await sequelize.query("ALTER TABLE subscriptions ADD COLUMN cancelled_at DATETIME NULL AFTER auto_pay_required;");
+    }
+
     // 2. payments.order_id for product order payments
     const [paymentOrderCols] = await sequelize.query("SHOW COLUMNS FROM payments LIKE 'order_id'");
     if (paymentOrderCols.length === 0) {
@@ -130,6 +138,14 @@ const runMigration = async () => {
     } catch (dbErr) {
       console.warn('Failed to update site_name or admin email in existing DB:', dbErr.message);
     }
+
+    // Keep existing installations aligned with the supported membership catalogue.
+    // Razorpay plan IDs are intentionally retained: replace them in Admin after
+    // creating the matching ₹199/3-month and ₹499/year Razorpay plans.
+    await sequelize.query("UPDATE subscription_plans SET price = 0.00, duration_days = 30, description = '30 days of standard access with ads. No payment or Autopay is required.' WHERE LOWER(plan_name) = 'free';");
+    await sequelize.query("UPDATE subscription_plans SET price = 199.00, duration_days = 90, description = 'First month free, then ₹199 every 3 months by mandatory Razorpay Autopay. Ad-free Premium access.' WHERE LOWER(plan_name) = 'quarterly';");
+    await sequelize.query("UPDATE subscription_plans SET price = 499.00, duration_days = 365, description = 'First month free, then ₹499 yearly by mandatory Razorpay Autopay. Ad-free Premium access.' WHERE LOWER(plan_name) = 'yearly';");
+    await sequelize.query("UPDATE subscription_plans SET status = 0 WHERE LOWER(plan_name) = 'monthly';");
 
     console.log('✅ Database migrations completed successfully.');
   } catch (error) {
