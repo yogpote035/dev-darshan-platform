@@ -154,11 +154,6 @@ const Subscription = () => {
           name: user.full_name,
           contact: user.phone
         },
-        // Show Razorpay's UPI Autopay flow, including UPI-ID/VPA entry whenever
-        // the merchant account has UPI subscriptions enabled.
-        method: {
-          upi: true
-        },
         theme: {
           color: '#d97706' // Amber Gold theme color for checkout window
         },
