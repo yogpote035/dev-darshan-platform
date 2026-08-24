@@ -6,6 +6,16 @@ const { validationResult } = require('express-validator');
 const { User, SubscriptionPlan } = require('../../models');
 const { buildIndianE164, sendPasswordResetCode, checkPasswordResetCode } = require('../../services/passwordResetService');
 
+const setAuthCookie = (res, token) => {
+  res.cookie('live_darshan_auth', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/'
+  });
+};
+
 const findUserByMobile = async (value) => {
   const phone = buildIndianE164(value);
   if (!phone) return null;
@@ -83,6 +93,7 @@ const register = async (req, res) => {
       getRequiredSecret('JWT_SECRET'),
       { expiresIn: '7d' }
     );
+    setAuthCookie(res, token);
 
     // Exclude password from output
     const userOutput = newUser.toJSON();
@@ -91,7 +102,6 @@ const register = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Registration successful',
-      token,
       user: userOutput
     });
   } catch (error) {
@@ -137,6 +147,7 @@ const login = async (req, res) => {
       getRequiredSecret('JWT_SECRET'),
       { expiresIn: '7d' }
     );
+    setAuthCookie(res, token);
 
     const userOutput = user.toJSON();
     delete userOutput.password;
@@ -144,13 +155,17 @@ const login = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Login successful',
-      token,
       user: userOutput
     });
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ success: false, message: 'Server error during login.' });
   }
+};
+
+const logout = (req, res) => {
+  res.clearCookie('live_darshan_auth', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  return res.status(200).json({ success: true, message: 'Logged out successfully.' });
 };
 
 const profile = async (req, res) => {
@@ -212,6 +227,7 @@ const confirmPasswordReset = async (req, res) => {
     if (verification.status !== 'approved') return res.status(400).json({ success: false, message: 'The reset code is invalid or has expired. Request a new code.' });
 
     user.password = await bcrypt.hash(password, 10);
+    user.password_changed_at = new Date();
     await user.save();
     return res.status(200).json({ success: true, message: 'Password changed successfully. Please sign in.' });
   } catch (error) {
@@ -225,6 +241,7 @@ module.exports = {
   register,
   login,
   profile,
+  logout,
   requestPasswordReset,
   confirmPasswordReset
 };

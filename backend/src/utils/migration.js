@@ -64,6 +64,13 @@ const runMigration = async () => {
     }
 
     // 3. users.referral_code
+    const [usersPasswordChangedAt] = await sequelize.query("SHOW COLUMNS FROM users LIKE 'password_changed_at'");
+    if (usersPasswordChangedAt.length === 0) {
+      console.log('Adding password_changed_at to users...');
+      await sequelize.query("ALTER TABLE users ADD COLUMN password_changed_at DATETIME NULL AFTER password");
+    }
+
+    // 3. users.referral_code
     const [usersRefCode] = await sequelize.query("SHOW COLUMNS FROM users LIKE 'referral_code'");
     if (usersRefCode.length === 0) {
       console.log('Adding referral_code to users...');

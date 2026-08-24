@@ -20,6 +20,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(255),
     allowNull: false
   },
+  password_changed_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   profile_image: {
     type: DataTypes.STRING(255),
     allowNull: true

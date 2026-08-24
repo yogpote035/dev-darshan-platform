@@ -16,7 +16,7 @@ const AuthContext = createContext(defaultAuthState);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('live_darshan_token'));
+  const [token, setToken] = useState(true);
   const [loading, setLoading] = useState(true);
 
   // Load profile when token changes
@@ -67,10 +67,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await API.post('/auth/login', { phone, password });
       if (response.data.success) {
-        const { token: receivedToken, user: receivedUser } = response.data;
-        localStorage.setItem('live_darshan_token', receivedToken);
+        const { user: receivedUser } = response.data;
         localStorage.setItem('live_darshan_user', JSON.stringify(receivedUser));
-        setToken(receivedToken);
+        setToken(true);
         setUser(receivedUser);
         return { success: true };
       }
@@ -96,10 +95,9 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        const { token: receivedToken, user: receivedUser } = response.data;
-        localStorage.setItem('live_darshan_token', receivedToken);
+        const { user: receivedUser } = response.data;
         localStorage.setItem('live_darshan_user', JSON.stringify(receivedUser));
-        setToken(receivedToken);
+        setToken(true);
         setUser(receivedUser);
         return { success: true };
       }
@@ -115,8 +113,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('live_darshan_token');
     localStorage.removeItem('live_darshan_user');
+    API.post('/auth/logout').catch(() => { });
     setToken(null);
     setUser(null);
     setLoading(false);

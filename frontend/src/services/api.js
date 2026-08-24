@@ -3,18 +3,15 @@ import axios from 'axios';
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Request interceptor to inject JWT token
+// Authentication is carried by the HttpOnly auth cookie.
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('live_darshan_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -33,7 +30,6 @@ API.interceptors.response.use(
       // If unauthorized (unverified/expired token) or blocked
       if (status === 401 || status === 403) {
         if (isAuthRoute || data.message?.includes('blocked')) {
-          localStorage.removeItem('live_darshan_token');
           localStorage.removeItem('live_darshan_user');
           window.dispatchEvent(new Event('auth_logout'));
         }

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(150) NOT NULL,
     phone VARCHAR(15) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    password_changed_at DATETIME NULL,
     profile_image VARCHAR(255) NULL,
     plan_id INT NULL,
     subscription_expiry DATETIME NULL,

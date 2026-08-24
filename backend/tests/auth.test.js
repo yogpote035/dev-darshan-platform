@@ -82,7 +82,7 @@ describe('User Authentication APIs', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
+      expect(res.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('live_darshan_auth=')]));
       expect(res.body.user.phone).toBe('9876543210');
     });
 
@@ -163,7 +163,7 @@ describe('User Authentication APIs', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
+      expect(res.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('live_darshan_auth=')]));
     });
 
     it('should reject invalid password', async () => {
