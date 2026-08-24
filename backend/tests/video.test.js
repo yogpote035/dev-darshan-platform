@@ -44,6 +44,15 @@ describe('Videos API and Helpers', () => {
       expect(id).toBe('dQw4w9WgXcQ');
     });
 
+    it('should extract YouTube video ID from a live URL', () => {
+      const id = youtubeHelper.getYoutubeId('https://www.youtube.com/live/dQw4w9WgXcQ?feature=share');
+      expect(id).toBe('dQw4w9WgXcQ');
+    });
+
+    it('should reject non-YouTube URLs', () => {
+      expect(youtubeHelper.getYoutubeId('https://example.com/live/dQw4w9WgXcQ')).toBeNull();
+    });
+
     it('should generate standard embed URL', () => {
       const url = youtubeHelper.getEmbedUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       expect(url).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
@@ -73,14 +82,14 @@ describe('Videos API and Helpers', () => {
         title: 'Kedarnath Aarti Live',
         total_views: 10,
         save: jest.fn().mockResolvedValue(),
-        toJSON: function() {
+        toJSON: function () {
           return { id: this.id, title: this.title, total_views: this.total_views };
         }
       };
       Video.findOne.mockResolvedValue(mockVideo);
 
       const res = await request(app).get('/api/videos/1');
-      
+
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(mockVideo.total_views).toBe(11); // View count increment check

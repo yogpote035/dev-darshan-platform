@@ -33,6 +33,18 @@ const AdPopup = () => {
 
   if (!showAdPopup || !currentAd) return null;
 
+  let externalAdUrl = null;
+  if (currentAd.redirect_url) {
+    try {
+      const parsedUrl = new URL(currentAd.redirect_url);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        externalAdUrl = parsedUrl.href;
+      }
+    } catch {
+      externalAdUrl = null;
+    }
+  }
+
   const premiumPrice = premiumPlan ? Number(premiumPlan.price).toLocaleString('en-IN') : '99';
   const premiumDuration = premiumPlan?.duration_days === 30 ? 'month' : `${premiumPlan?.duration_days || 30} days`;
 
@@ -54,9 +66,9 @@ const AdPopup = () => {
             onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60'; }}
             className="w-full h-full object-cover"
           />
-          {currentAd.redirect_url && (
+          {externalAdUrl && (
             <a
-              href={currentAd.redirect_url}
+              href={externalAdUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center text-white font-semibold gap-1.5"
@@ -68,9 +80,9 @@ const AdPopup = () => {
         </div>
 
         {/* Call to Action Button */}
-        {currentAd.redirect_url && (
+        {externalAdUrl && (
           <a
-            href={currentAd.redirect_url}
+            href={externalAdUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full btn-gold text-center py-3.5 mb-4 flex items-center justify-center gap-1.5 text-sm text-decoration-none"

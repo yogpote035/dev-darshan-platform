@@ -13,16 +13,26 @@ const getRequiredSecret = (name) => {
 };
 
 const getAllowedOrigins = () => {
-    const configuredOrigins = (process.env.FRONTEND_URL || '')
+    const configuredOrigins = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
         .split(',')
         .map((origin) => origin.trim())
+        .map((origin) => origin.replace(/\/$/, ''))
         .filter(Boolean);
 
-    if (process.env.NODE_ENV === 'production' && configuredOrigins.length === 0) {
+    const backendUrl = process.env.BACKEND_URL?.trim();
+    if (backendUrl) configuredOrigins.push(backendUrl.replace(/\/$/, ''));
+
+    if (process.env.NODE_ENV !== 'production') {
+        const port = process.env.PORT || 5000;
+        configuredOrigins.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+    }
+
+    const uniqueOrigins = [...new Set(configuredOrigins)];
+    if (process.env.NODE_ENV === 'production' && !uniqueOrigins.some((origin) => origin !== backendUrl)) {
         throw new Error('FRONTEND_URL must be configured in production');
     }
 
-    return configuredOrigins;
+    return uniqueOrigins;
 };
 
 module.exports = {

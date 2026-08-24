@@ -6,7 +6,7 @@ module.exports = async (req, res, next) => {
     const origin = req.get('origin');
     const fetchSite = req.get('sec-fetch-site');
     const allowedOrigins = getAllowedOrigins();
-    if ((origin && !allowedOrigins.includes(origin)) || fetchSite === 'cross-site') {
+    if (process.env.NODE_ENV === 'production' && ((origin && !allowedOrigins.includes(origin)) || fetchSite === 'cross-site')) {
       return res.status(403).send('Cross-site admin request blocked.');
     }
 
