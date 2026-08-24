@@ -32,14 +32,12 @@ const validateProductInput = async (data) => {
     if (isOfferEnabled) {
         if (!subscriptionEnabled) return 'Enable subscriptions when enabling the ₹1 offer.';
         if (!/^\d+(?:\.\d{1,2})?$/.test(String(data.one_rupee_price || '')) || !isPositiveDecimal(data.one_rupee_price)) return 'Offer price must be a valid amount of at least ₹0.01.';
-        if (!/^\d+(?:\.\d{1,2})?$/.test(String(data.subscription_amount || '')) || !isPositiveDecimal(data.subscription_amount)) return 'Recurring monthly amount must be a valid amount greater than ₹0.';
         if (!/^\d+$/.test(String(data.subscription_trial_days ?? '')) || !Number.isInteger(Number(data.subscription_trial_days)) || Number(data.subscription_trial_days) > 3650) return 'Trial days must be a whole number from 0 to 3,650.';
         if (!data.subscription_plan_id) return 'Select a Razorpay-ready subscription plan for the ₹1 offer.';
         const selectedPlan = await SubscriptionPlan.findOne({ where: { id: data.subscription_plan_id, status: 1 } });
         if (!selectedPlan) return 'Select a valid active subscription plan.';
         if (![30, 90, 365, 366].includes(Number(selectedPlan.duration_days))) return 'The selected app plan must be Monthly (30 days), Quarterly (90 days), or Yearly (365 days).';
         if (Number(selectedPlan.price || 0) <= 0) return 'The selected app plan must have a recurring price greater than ₹0.';
-        if (Math.abs(Number(data.subscription_amount) - Number(selectedPlan.price)) > 0.001) return `Recurring amount must match the selected ${selectedPlan.plan_name} plan price (₹${Number(selectedPlan.price).toFixed(2)}).`;
     }
     return null;
 };
@@ -76,7 +74,7 @@ const getAddProduct = async (req, res) => {
 
 const postAddProduct = async (req, res) => {
     try {
-        const { name, slug, short_description, description, price, category_id, brand, sku, stock, featured, active, allow_one_rupee_offer, one_rupee_price, subscription_amount, subscription_trial_days, subscription_plan_id, subscription_enabled, razorpay_plan_id } = req.body;
+        const { name, slug, short_description, description, price, category_id, brand, sku, stock, featured, active, allow_one_rupee_offer, one_rupee_price, subscription_trial_days, subscription_plan_id, subscription_enabled, razorpay_plan_id } = req.body;
 
         const validationError = await validateProductInput(req.body);
         if (validationError) {
@@ -153,7 +151,7 @@ const postEditProduct = async (req, res) => {
             return res.redirect('/admin/products?error=Product+not+found');
         }
 
-        const { name, slug, short_description, description, price, category_id, brand, sku, stock, featured, active, allow_one_rupee_offer, one_rupee_price, subscription_amount, subscription_trial_days, subscription_plan_id, subscription_enabled, razorpay_plan_id } = req.body;
+        const { name, slug, short_description, description, price, category_id, brand, sku, stock, featured, active, allow_one_rupee_offer, one_rupee_price, subscription_trial_days, subscription_plan_id, subscription_enabled, razorpay_plan_id } = req.body;
         const validationError = await validateProductInput(req.body);
         if (validationError) {
             const categories = await ProductCategory.findAll({ where: { active: true } });
@@ -189,8 +187,7 @@ const postEditProduct = async (req, res) => {
         product.allow_one_rupee_offer = isOfferEnabled;
         product.one_rupee_price = isOfferEnabled ? one_rupee_price : null;
         product.subscription_plan_id = subscription_plan_id || null;
-        // Clear an auto-created plan when the configured monthly amount changes;
-        // Razorpay plans are immutable, so the next checkout creates one matching the new amount.
+        // Razorpay plans are immutable, so changing the selected plan creates a new plan at checkout.
         product.razorpay_plan_id = razorpay_plan_id?.trim() || (
             planChanged || Number(product.subscription_amount || 0) !== Number(selectedPlan?.price || 0)
                 ? null

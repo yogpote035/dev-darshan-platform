@@ -81,7 +81,7 @@ const ProductDetails = () => {
 
                     {product.isOfferAvailable && (
                         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
-                            Special ₹1 today offer available with a {product.trialDays || 7}-day trial and then ₹{Number(product.monthlyAmount || 0).toFixed(2)}/month.
+                            Special ₹1 today offer available with a {product.trialDays || 7}-day trial and then ₹{Number(product.recurringAmount || 0).toFixed(2)} every {product.recurringPeriod === 365 || product.recurringPeriod === 366 ? 'year' : product.recurringPeriod === 90 ? '3 months' : `${product.recurringPeriod || 30} days`}.
                         </div>
                     )}
 

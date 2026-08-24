@@ -156,7 +156,7 @@ const Products = () => {
                                     <div className="text-lg font-black text-amber-400">₹{Number(product.price || 0).toFixed(2)}</div>
                                     {product.isOfferAvailable && (
                                         <div className="text-xs text-gray-300">
-                                            <span className="font-bold text-amber-400">₹1 today</span> • ₹{Number(product.monthlyAmount || 0).toFixed(2)}/month after 7 days
+                                            <span className="font-bold text-amber-400">₹1 today</span> • ₹{Number(product.recurringAmount || 0).toFixed(2)} every {product.recurringPeriod === 365 || product.recurringPeriod === 366 ? 'year' : product.recurringPeriod === 90 ? '3 months' : `${product.recurringPeriod || 30} days`} after {product.trialDays || 7} days
                                         </div>
                                     )}
                                 </div>

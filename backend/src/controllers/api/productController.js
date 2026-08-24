@@ -1,18 +1,11 @@
 const { Op } = require('sequelize');
 const { Product, ProductCategory, SubscriptionPlan } = require('../../models');
 
-const resolveMonthlyAmount = (product, planMap = {}) => {
+const resolveRecurringPlan = (product, planMap = {}) => {
     const plain = product && product.toJSON ? product.toJSON() : product || {};
-    const fromField = plain.subscription_amount !== null && plain.subscription_amount !== undefined ? Number(plain.subscription_amount) : null;
-    if (fromField !== null && !Number.isNaN(fromField) && fromField > 0) {
-        return fromField;
-    }
-
     if (plain.subscription_plan_id) {
         const plan = planMap[plain.subscription_plan_id];
-        if (plan && Number(plan.price || 0) > 0) {
-            return Number(plan.price);
-        }
+        if (plan && Number(plan.price || 0) > 0) return plan;
     }
 
     return null;
@@ -21,13 +14,14 @@ const resolveMonthlyAmount = (product, planMap = {}) => {
 const serializeProduct = (product, planMap = {}) => {
     if (!product) return null;
     const plain = product.toJSON ? product.toJSON() : product;
-    const monthlyAmount = resolveMonthlyAmount(plain, planMap);
+    const recurringPlan = resolveRecurringPlan(plain, planMap);
 
     return {
         ...plain,
         imageUrl: plain.image,
         isOfferAvailable: !!plain.allow_one_rupee_offer && !!plain.subscription_enabled && Number(plain.stock || 0) > 0,
-        monthlyAmount,
+        recurringAmount: recurringPlan ? Number(recurringPlan.price) : null,
+        recurringPeriod: recurringPlan ? recurringPlan.duration_days : null,
         trialDays: plain.subscription_trial_days || 7,
         price: Number(plain.price || 0),
         oneRupeePrice: Number(plain.one_rupee_price || 1)

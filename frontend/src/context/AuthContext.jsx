@@ -16,51 +16,45 @@ const AuthContext = createContext(defaultAuthState);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(true);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load profile when token changes
-  const loadProfile = async (currentToken) => {
-    try {
-      if (!currentToken) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
+  const clearSession = () => {
+    localStorage.removeItem('live_darshan_user');
+    setToken(null);
+    setUser(null);
+  };
 
+  const loadProfile = async () => {
+    try {
       const response = await API.get('/auth/profile');
       if (response.data.success) {
         setUser(response.data.user);
         localStorage.setItem('live_darshan_user', JSON.stringify(response.data.user));
-      } else {
-        logout();
       }
     } catch (error) {
-      console.error('loadProfile error:', error);
-      logout();
+      if (error.response?.status !== 401 && error.response?.status !== 403) {
+        console.error('loadProfile error:', error);
+      }
+      clearSession();
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      loadProfile(token);
-    } else {
-      setLoading(false);
-    }
+    loadProfile();
 
     // Listener for interceptor logouts
     const handleForceLogout = () => {
-      setUser(null);
-      setToken(null);
+      clearSession();
     };
 
     window.addEventListener('auth_logout', handleForceLogout);
     return () => {
       window.removeEventListener('auth_logout', handleForceLogout);
     };
-  }, [token]);
+  }, []);
 
   const login = async (phone, password) => {
     setLoading(true);
@@ -69,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         const { user: receivedUser } = response.data;
         localStorage.setItem('live_darshan_user', JSON.stringify(receivedUser));
-        setToken(true);
+        setToken('authenticated');
         setUser(receivedUser);
         return { success: true };
       }
@@ -97,7 +91,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         const { user: receivedUser } = response.data;
         localStorage.setItem('live_darshan_user', JSON.stringify(receivedUser));
-        setToken(true);
+        setToken('authenticated');
         setUser(receivedUser);
         return { success: true };
       }
@@ -113,17 +107,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('live_darshan_user');
     API.post('/auth/logout').catch(() => { });
-    setToken(null);
-    setUser(null);
+    clearSession();
     setLoading(false);
   };
 
   const refreshUser = async () => {
-    if (token) {
-      await loadProfile(token);
-    }
+    await loadProfile();
   };
 
   return (
