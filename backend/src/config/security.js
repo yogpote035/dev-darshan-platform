@@ -1,5 +1,6 @@
 const TEST_JWT_SECRET = 'super_secret_jwt_key_123!@#';
 const TEST_SESSION_SECRET = 'super_secret_session_key_987!@#';
+const PRODUCTION_FRONTEND_ORIGINS = ['https://devdarshanlive.com/', 'https://www.devdarshanlive.com', 'http://api.devdarshanlive.com/'];
 
 const getRequiredSecret = (name) => {
     const value = process.env[name];
@@ -22,16 +23,16 @@ const getAllowedOrigins = () => {
     const backendUrl = process.env.BACKEND_URL?.trim();
     if (backendUrl) configuredOrigins.push(backendUrl.replace(/\/$/, ''));
 
+    if (process.env.NODE_ENV === 'production') {
+        configuredOrigins.push(...PRODUCTION_FRONTEND_ORIGINS);
+    }
+
     if (process.env.NODE_ENV !== 'production') {
         const port = process.env.PORT || 5000;
         configuredOrigins.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
     }
 
     const uniqueOrigins = [...new Set(configuredOrigins)];
-    if (process.env.NODE_ENV === 'production' && !uniqueOrigins.some((origin) => origin !== backendUrl)) {
-        throw new Error('FRONTEND_URL must be configured in production');
-    }
-
     return uniqueOrigins;
 };
 

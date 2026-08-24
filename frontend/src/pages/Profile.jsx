@@ -69,7 +69,9 @@ const Profile = () => {
           setOrders(ordersRes.data.orders || []);
         }
       } catch (error) {
-        console.error('Error loading profile lists:', error);
+        if (error.response?.status !== 401 && error.response?.status !== 403) {
+          console.error('Error loading profile lists:', error);
+        }
       } finally {
         setLoadingList(false);
       }
@@ -335,8 +337,8 @@ const Profile = () => {
                       type="button"
                       onClick={() => setWithdrawMethod('qr_code')}
                       className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${withdrawMethod === 'qr_code'
-                          ? 'bg-amber-500/10 border-amber-500 text-amber-500'
-                          : 'bg-zinc-950 border-zinc-800 text-gray-400 hover:text-gray-200'
+                        ? 'bg-amber-500/10 border-amber-500 text-amber-500'
+                        : 'bg-zinc-950 border-zinc-800 text-gray-400 hover:text-gray-200'
                         }`}
                     >
                       <QrCode size={14} />
@@ -346,8 +348,8 @@ const Profile = () => {
                       type="button"
                       onClick={() => setWithdrawMethod('bank_details')}
                       className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${withdrawMethod === 'bank_details'
-                          ? 'bg-amber-500/10 border-amber-500 text-amber-500'
-                          : 'bg-zinc-950 border-zinc-800 text-gray-400 hover:text-gray-200'
+                        ? 'bg-amber-500/10 border-amber-500 text-amber-500'
+                        : 'bg-zinc-950 border-zinc-800 text-gray-400 hover:text-gray-200'
                         }`}
                     >
                       <Building size={14} />
@@ -448,10 +450,10 @@ const Profile = () => {
                         </span>
                       </div>
                       <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${req.status === 'approved'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : req.status === 'rejected'
-                            ? 'bg-red-500/10 text-red-400'
-                            : 'bg-amber-500/10 text-amber-400'
+                        ? 'bg-emerald-500/10 text-emerald-400'
+                        : req.status === 'rejected'
+                          ? 'bg-red-500/10 text-red-400'
+                          : 'bg-amber-500/10 text-amber-400'
                         }`}>
                         {req.status}
                       </span>
@@ -487,8 +489,8 @@ const Profile = () => {
         <button
           onClick={() => setActiveTab('favorites')}
           className={`flex-grow py-3 font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'favorites'
-              ? 'border-amber-500 text-amber-500'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+            ? 'border-amber-500 text-amber-500'
+            : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
         >
           <Heart size={14} className={activeTab === 'favorites' ? 'fill-amber-500/10' : ''} />
@@ -498,8 +500,8 @@ const Profile = () => {
         <button
           onClick={() => setActiveTab('history')}
           className={`flex-grow py-3 font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'history'
-              ? 'border-amber-500 text-amber-500'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+            ? 'border-amber-500 text-amber-500'
+            : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
         >
           <Clock size={14} />
@@ -509,8 +511,8 @@ const Profile = () => {
         <button
           onClick={() => setActiveTab('orders')}
           className={`flex-grow py-3 font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'orders'
-              ? 'border-amber-500 text-amber-500'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+            ? 'border-amber-500 text-amber-500'
+            : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
         >
           <Package size={14} />
@@ -632,10 +634,10 @@ const Profile = () => {
                       </p>
                     </div>
                     <span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wider ${order.payment_status === 'paid'
-                        ? 'bg-emerald-500/10 text-emerald-400'
-                        : order.payment_status === 'failed'
-                          ? 'bg-red-500/10 text-red-400'
-                          : 'bg-amber-500/10 text-amber-400'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : order.payment_status === 'failed'
+                        ? 'bg-red-500/10 text-red-400'
+                        : 'bg-amber-500/10 text-amber-400'
                       }`}>
                       {order.payment_status || 'pending'}
                     </span>
