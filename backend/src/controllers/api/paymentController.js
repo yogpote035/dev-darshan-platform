@@ -80,7 +80,7 @@ const createSubscription = async (req, res) => {
     const startAt = Math.floor((Date.now() + TRIAL_DAYS * 86400000) / 1000);
     if (isMock) return res.json({ success: true, isMock: true, key: 'mock_key_id', subscription_id: `sub_mock_${uuidv4().replace(/-/g, '').slice(0, 18)}`, plan });
     // Keep the calculated end_time within Razorpay's supported Unix timestamp range.
-    const totalCount = isYearly ? 90 : 100;
+    const totalCount = isYearly ? 29 : 100;
     const subscription = await instance.subscriptions.create({ plan_id: plan.razorpay_plan_id, total_count: totalCount, start_at: startAt, customer_notify: 1, notes: { user_id: String(req.user.id), plan_id: String(plan.id), trial_days: String(TRIAL_DAYS) } });
     return res.json({ success: true, isMock: false, key: keyId, subscription_id: subscription.id, plan });
   } catch (error) {

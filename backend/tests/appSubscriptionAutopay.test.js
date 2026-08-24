@@ -51,7 +51,7 @@ describe('membership Autopay lifecycle', () => {
 
     await createSubscription({ user: { id: 7 }, body: { plan_id: 3 } }, res);
 
-    expect(razorpayInstance.subscriptions.create).toHaveBeenCalledWith(expect.objectContaining({ total_count: 90 }));
+    expect(razorpayInstance.subscriptions.create).toHaveBeenCalledWith(expect.objectContaining({ total_count: 29 }));
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ subscription_id: 'sub_live_123' }));
   });
 
