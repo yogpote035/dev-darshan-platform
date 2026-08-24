@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User, SubscriptionPlan } = require('../models');
+const { getRequiredSecret } = require('../config/security');
 
 module.exports = async (req, res, next) => {
   try {
@@ -9,7 +10,7 @@ module.exports = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#');
+    const decoded = jwt.verify(token, getRequiredSecret('JWT_SECRET'));
 
     const user = await User.findByPk(decoded.id, {
       include: [{ model: SubscriptionPlan, as: 'Plan' }]

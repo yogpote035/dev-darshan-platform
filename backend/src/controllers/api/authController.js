@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { getRequiredSecret } = require('../../config/security');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const { validationResult } = require('express-validator');
@@ -79,7 +80,7 @@ const register = async (req, res) => {
     // Generate JWT
     const token = jwt.sign(
       { id: newUser.id },
-      process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#',
+      getRequiredSecret('JWT_SECRET'),
       { expiresIn: '7d' }
     );
 
@@ -133,7 +134,7 @@ const login = async (req, res) => {
     // Generate JWT
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#',
+      getRequiredSecret('JWT_SECRET'),
       { expiresIn: '7d' }
     );
 

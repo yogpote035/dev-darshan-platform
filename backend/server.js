@@ -1,5 +1,11 @@
 require('dotenv').config();
 
+const { getRequiredSecret, getAllowedOrigins } = require('./src/config/security');
+
+getRequiredSecret('JWT_SECRET');
+getRequiredSecret('SESSION_SECRET');
+getAllowedOrigins();
+
 const app = require('./app');
 const { sequelize } = require('./src/models');
 

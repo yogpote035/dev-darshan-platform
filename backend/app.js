@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const session = require('express-session');
 const { rateLimit } = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
+const { getRequiredSecret, getAllowedOrigins } = require('./src/config/security');
 
 // Configs and Middlewares
 const swaggerSpec = require('./src/config/swagger');
@@ -108,8 +109,12 @@ app.use(helmet({
 }));
 
 // CORS Configuration
+const allowedOrigins = getAllowedOrigins();
 const corsOptions = {
-  origin: '*', // In production, replace with specific React client URL
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Origin is not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
@@ -136,13 +141,20 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests from this IP. Please try again after 15 minutes.' }
 });
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: 'Too many login attempts. Please try again later.'
+});
 
 // ==========================
 // SESSION CONFIG (ADMIN PANEL)
 // ==========================
 let sessionConfig = {
   name: 'dev_darshan_live_admin_sid',
-  secret: process.env.SESSION_SECRET || 'super_secret_session_key_987!@#',
+  secret: getRequiredSecret('SESSION_SECRET'),
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -190,6 +202,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', apiLimiter, apiRoutes);
 
 // Admin EJS Panel
+app.use('/admin/login', adminLoginLimiter);
 app.use('/admin', adminRoutes);
 
 // Root Redirect

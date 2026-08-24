@@ -1,7 +1,15 @@
 const { Admin } = require('../models');
+const { getAllowedOrigins } = require('../config/security');
 
 module.exports = async (req, res, next) => {
   try {
+    const origin = req.get('origin');
+    const fetchSite = req.get('sec-fetch-site');
+    const allowedOrigins = getAllowedOrigins();
+    if ((origin && !allowedOrigins.includes(origin)) || fetchSite === 'cross-site') {
+      return res.status(403).send('Cross-site admin request blocked.');
+    }
+
     if (!req.session || !req.session.admin) {
       return res.redirect('/admin/login');
     }
