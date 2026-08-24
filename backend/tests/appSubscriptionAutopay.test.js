@@ -58,6 +58,55 @@ describe('membership Autopay lifecycle', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ subscription_id: 'sub_live_123' }));
   });
 
+  it('returns a payment error and does not create local Premium access when Razorpay rejects the mandate', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAZORPAY_KEY_ID = 'rzp_live_test_key';
+    process.env.RAZORPAY_SECRET = 'live_test_secret';
+    SubscriptionPlan.findByPk.mockResolvedValue({ id: 3, plan_name: 'Yearly', price: 499, duration_days: 365, status: 1, razorpay_plan_id: 'plan_yearly' });
+    const razorpayInstance = {
+      subscriptions: {
+        create: jest.fn().mockRejectedValue({
+          error: { code: 'BAD_REQUEST_ERROR', description: 'expire_at cannot be more than 30 years for upi' }
+        })
+      }
+    };
+    Razorpay.mockImplementationOnce(() => razorpayInstance);
+    const res = responseDouble();
+
+    await createSubscription({ user: { id: 7 }, body: { plan_id: 3 } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Unable to start Autopay setup.' });
+    expect(Subscription.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an inactive or missing plan before contacting Razorpay', async () => {
+    SubscriptionPlan.findByPk.mockResolvedValue(null);
+    const res = responseDouble();
+
+    await createSubscription({ user: { id: 7 }, body: { plan_id: 999 } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Select an active paid plan.' });
+    expect(Razorpay).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid Autopay authorization without activating Premium', async () => {
+    const res = responseDouble();
+    await verifySubscription({
+      user: { id: 7 },
+      body: {
+        plan_id: 3,
+        razorpay_subscription_id: 'sub_invalid',
+        razorpay_payment_id: 'pay_mock_123'
+      }
+    }, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Autopay authorization could not be verified.' });
+    expect(Subscription.create).not.toHaveBeenCalled();
+  });
+
   it('cancels Autopay and immediately removes Premium access', async () => {
     const subscription = { id: 100, razorpay_subscription_id: 'sub_mock_123', status: 'active', auto_pay_required: true, save: jest.fn().mockResolvedValue() };
     const user = { id: 7, plan_id: 3, subscription_expiry: new Date(Date.now() + 86400000), save: jest.fn().mockResolvedValue() };
