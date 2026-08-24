@@ -22,6 +22,7 @@ const getAllowedOrigins = () => {
         .split(',')
         .map((origin) => origin.trim())
         .map((origin) => origin.replace(/\/$/, ''))
+        .filter((origin) => /^https?:\/\/[^/]+$/.test(origin))
         .filter(Boolean);
 
     const backendUrl = process.env.BACKEND_URL?.trim();

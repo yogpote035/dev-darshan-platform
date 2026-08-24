@@ -114,7 +114,7 @@ const corsOptions = {
   origin: (origin, callback) => {
     if (process.env.NODE_ENV !== 'production') return callback(null, true);
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Origin is not allowed by CORS'));
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
