@@ -103,10 +103,13 @@ const Register = () => {
                 <Phone size={16} />
               </span>
               <input
-                type="tel"
+                type="number"
                 id="phone"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                inputMode="numeric"
+                pattern="\d{10,15}"
+                maxLength={15}
                 placeholder="Enter mobile number"
                 className="w-full pl-10 pr-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-gray-200 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                 required

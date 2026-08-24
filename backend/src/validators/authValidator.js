@@ -6,11 +6,13 @@ const registerValidator = [
     .trim()
     .notEmpty()
     .withMessage('Full Name is required'),
-  
+
   body('phone')
     .trim()
     .notEmpty()
     .withMessage('Phone Number is required')
+    .isNumeric()
+    .withMessage('Phone Number must contain digits only')
     .isLength({ min: 10, max: 15 })
     .withMessage('Phone Number must be between 10 and 15 digits')
     .custom(async (value) => {
@@ -38,8 +40,12 @@ const loginValidator = [
   body('phone')
     .trim()
     .notEmpty()
-    .withMessage('Phone Number is required'),
-  
+    .withMessage('Phone Number is required')
+    .isNumeric()
+    .withMessage('Phone Number must contain digits only')
+    .isLength({ min: 10, max: 15 })
+    .withMessage('Phone Number must be between 10 and 15 digits'),
+
   body('password')
     .notEmpty()
     .withMessage('Password is required')

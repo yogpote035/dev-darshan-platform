@@ -1,7 +1,7 @@
 /**
  * Helper to resolve and format category, video, and banner image paths.
  * If the path is an external link (starts with http/https), it returns it as is.
- * Otherwise, it prepends the backend server host address from VITE_API_URL.
+ * Otherwise, it prepends the production backend server host address.
  * @param {string} path - The raw image path from database
  * @returns {string} Fully qualified image URL or placeholder fallback
  */
@@ -18,7 +18,7 @@ export const getImageUrl = (path) => {
   // Ensure path starts with a slash
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiUrl = 'https://api.devdarshanlive.com/api';
   const backendHost = apiUrl.replace(/\/api\/?$/, '');
 
   return `${backendHost}${cleanPath}`;
