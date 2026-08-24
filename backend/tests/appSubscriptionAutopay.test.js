@@ -12,8 +12,9 @@ jest.mock('../src/models', () => ({
   Commission: { create: jest.fn() }
 }));
 
+const Razorpay = require('razorpay');
 const { User, SubscriptionPlan, Subscription } = require('../src/models');
-const { verifySubscription, cancelSubscription } = require('../src/controllers/api/paymentController');
+const { createSubscription, verifySubscription, cancelSubscription } = require('../src/controllers/api/paymentController');
 
 const responseDouble = () => {
   const res = {};
@@ -37,6 +38,21 @@ describe('membership Autopay lifecycle', () => {
     await verifySubscription({ user: { id: 7 }, body: { plan_id: 3, razorpay_subscription_id: 'sub_mock_123', razorpay_payment_id: 'pay_mock_123' } }, res);
     expect(res.status).not.toHaveBeenCalledWith(400);
     expect(Subscription.create).toHaveBeenCalledWith(expect.objectContaining({ user_id: 7, plan_id: 3, auto_pay_required: true, status: 'active' }));
+  });
+
+  it('keeps annual Razorpay subscriptions within the supported end_time range', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAZORPAY_KEY_ID = 'rzp_live_test_key';
+    process.env.RAZORPAY_SECRET = 'live_test_secret';
+    SubscriptionPlan.findByPk.mockResolvedValue({ id: 3, plan_name: 'Yearly', price: 899, duration_days: 365, status: 1, razorpay_plan_id: 'plan_yearly' });
+    const razorpayInstance = { subscriptions: { create: jest.fn().mockResolvedValue({ id: 'sub_live_123' }) } };
+    Razorpay.mockImplementationOnce(() => razorpayInstance);
+    const res = responseDouble();
+
+    await createSubscription({ user: { id: 7 }, body: { plan_id: 3 } }, res);
+
+    expect(razorpayInstance.subscriptions.create).toHaveBeenCalledWith(expect.objectContaining({ total_count: 90 }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ subscription_id: 'sub_live_123' }));
   });
 
   it('cancels Autopay and immediately removes Premium access', async () => {

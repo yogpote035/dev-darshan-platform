@@ -60,10 +60,10 @@ const createSubscription = async (req, res) => {
     const plan = await getPaidPlan(req.body.plan_id);
     if (!plan) return res.status(404).json({ success: false, message: 'Select an active paid plan.' });
     const { isMock, keyId, instance } = await getRazorpayInstance();
+    const isYearly = Number(plan.duration_days) >= 365;
     // Razorpay Plans are immutable. Create the correct recurring plan once and
     // persist its ID, so an admin does not need to manually copy a plan_ ID.
     if (!isMock && !plan.razorpay_plan_id) {
-      const isYearly = Number(plan.duration_days) >= 365;
       const razorpayPlan = await instance.plans.create({
         period: isYearly ? 'yearly' : 'monthly',
         interval: isYearly ? 1 : 3,
@@ -79,9 +79,9 @@ const createSubscription = async (req, res) => {
     }
     const startAt = Math.floor((Date.now() + TRIAL_DAYS * 86400000) / 1000);
     if (isMock) return res.json({ success: true, isMock: true, key: 'mock_key_id', subscription_id: `sub_mock_${uuidv4().replace(/-/g, '').slice(0, 18)}`, plan });
-    // Razorpay caps total_count at 100 for these recurring plan intervals.
-    // This still provides 25 years of quarterly billing or 100 years of yearly billing.
-    const subscription = await instance.subscriptions.create({ plan_id: plan.razorpay_plan_id, total_count: 100, start_at: startAt, customer_notify: 1, notes: { user_id: String(req.user.id), plan_id: String(plan.id), trial_days: String(TRIAL_DAYS) } });
+    // Keep the calculated end_time within Razorpay's supported Unix timestamp range.
+    const totalCount = isYearly ? 90 : 100;
+    const subscription = await instance.subscriptions.create({ plan_id: plan.razorpay_plan_id, total_count: totalCount, start_at: startAt, customer_notify: 1, notes: { user_id: String(req.user.id), plan_id: String(plan.id), trial_days: String(TRIAL_DAYS) } });
     return res.json({ success: true, isMock: false, key: keyId, subscription_id: subscription.id, plan });
   } catch (error) {
     console.error('createSubscription error:', error);
