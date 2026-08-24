@@ -40,18 +40,21 @@ describe('membership Autopay lifecycle', () => {
     expect(Subscription.create).toHaveBeenCalledWith(expect.objectContaining({ user_id: 7, plan_id: 3, auto_pay_required: true, status: 'active' }));
   });
 
-  it('keeps annual Razorpay subscriptions within the supported end_time range', async () => {
+  it.each([
+    ['quarterly 199', 199, 90, 100],
+    ['yearly 499', 499, 365, 29]
+  ])('uses a valid Razorpay cycle count for the %s plan', async (_label, price, durationDays, expectedTotalCount) => {
     process.env.NODE_ENV = 'production';
     process.env.RAZORPAY_KEY_ID = 'rzp_live_test_key';
     process.env.RAZORPAY_SECRET = 'live_test_secret';
-    SubscriptionPlan.findByPk.mockResolvedValue({ id: 3, plan_name: 'Yearly', price: 899, duration_days: 365, status: 1, razorpay_plan_id: 'plan_yearly' });
+    SubscriptionPlan.findByPk.mockResolvedValue({ id: 3, plan_name: 'Premium', price, duration_days: durationDays, status: 1, razorpay_plan_id: 'plan_premium' });
     const razorpayInstance = { subscriptions: { create: jest.fn().mockResolvedValue({ id: 'sub_live_123' }) } };
     Razorpay.mockImplementationOnce(() => razorpayInstance);
     const res = responseDouble();
 
     await createSubscription({ user: { id: 7 }, body: { plan_id: 3 } }, res);
 
-    expect(razorpayInstance.subscriptions.create).toHaveBeenCalledWith(expect.objectContaining({ total_count: 29 }));
+    expect(razorpayInstance.subscriptions.create).toHaveBeenCalledWith(expect.objectContaining({ total_count: expectedTotalCount }));
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ subscription_id: 'sub_live_123' }));
   });
 
