@@ -1,6 +1,10 @@
 const TEST_JWT_SECRET = 'super_secret_jwt_key_123!@#';
 const TEST_SESSION_SECRET = 'super_secret_session_key_987!@#';
-const PRODUCTION_FRONTEND_ORIGINS = ['https://devdarshanlive.com/', 'https://www.devdarshanlive.com', 'http://api.devdarshanlive.com/'];
+const PRODUCTION_FRONTEND_ORIGINS = [
+    'https://devdarshanlive.com',
+    'https://www.devdarshanlive.com',
+    'https://api.devdarshanlive.com'
+];
 
 const getRequiredSecret = (name) => {
     const value = process.env[name];
