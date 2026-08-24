@@ -3,6 +3,7 @@ const router = express.Router();
 
 // Middlewares
 const adminAuth = require('../../middlewares/adminAuth');
+const requireSuperAdmin = require('../../middlewares/requireSuperAdmin');
 const upload = require('../../middlewares/uploadMiddleware');
 
 // Controllers
@@ -106,6 +107,7 @@ router.get('/enquiries', enquiryController.getEnquiries);
 router.get('/enquiries/:id/delete', enquiryController.deleteEnquiry);
 
 // Settings
+router.use(['/settings', '/reports', '/withdrawals'], requireSuperAdmin);
 router.get('/settings', settingController.getSettings);
 router.post('/settings', upload.single('logo'), settingController.postSettings);
 

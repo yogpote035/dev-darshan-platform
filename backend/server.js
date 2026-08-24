@@ -31,14 +31,18 @@ const startServer = async () => {
 
     app.listen(PORT, () => {
       console.log(`===============================================`);
-      console.log(`🚀 Server is running on: http://localhost:${PORT}`);
-      console.log(`🌐 Swagger UI Docs:     http://localhost:${PORT}/api/docs`);
-      console.log(`⚙️ Admin Panel URL:    http://localhost:${PORT}/admin/login`);
+      console.log(`Server is running on: http://localhost:${PORT}`);
+      console.log(`Swagger UI Docs:     http://localhost:${PORT}/api/docs`);
+      console.log(`Admin Panel URL:    http://localhost:${PORT}/admin/login`);
       console.log(`===============================================`);
     });
   } catch (error) {
     console.error('Unable to connect to the database or start server:', error);
-    // If database connection fails, run server anyway so developers can edit configurations via admin settings
+    if (process.env.NODE_ENV === 'production') {
+      process.exitCode = 1;
+      return;
+    }
+
     app.listen(PORT, () => {
       console.log(`⚠️ Database unavailable. Running server on: http://localhost:${PORT}`);
     });
