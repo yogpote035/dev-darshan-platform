@@ -2,9 +2,17 @@ const TEST_JWT_SECRET = 'super_secret_jwt_key_123!@#';
 const PRODUCTION_FRONTEND_ORIGINS = [
     'https://devdarshanlive.com',
     'https://www.devdarshanlive.com',
-    'http://localhost:5173/',
     'https://api.devdarshanlive.com'
 ];
+
+const normalizeOrigin = (value) => {
+    try {
+        const origin = new URL(String(value || '').trim()).origin;
+        return /^https?:\/\/[^/]+$/.test(origin) ? origin : null;
+    } catch (_) {
+        return null;
+    }
+};
 
 const getRequiredSecret = (name) => {
     const value = process.env[name];
@@ -18,15 +26,18 @@ const getRequiredSecret = (name) => {
 };
 
 const getAllowedOrigins = () => {
-    const configuredOrigins = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
+    const configuredOrigins = [process.env.FRONTEND_URL, process.env.FRONTEND_URLS]
+        .filter(Boolean)
+        .join(',')
         .split(',')
-        .map((origin) => origin.trim())
-        .map((origin) => origin.replace(/\/$/, ''))
-        .filter((origin) => /^https?:\/\/[^/]+$/.test(origin))
+        .map(normalizeOrigin)
         .filter(Boolean);
 
     const backendUrl = process.env.BACKEND_URL?.trim();
-    if (backendUrl) configuredOrigins.push(backendUrl.replace(/\/$/, ''));
+    if (backendUrl) {
+        const normalizedBackendUrl = normalizeOrigin(backendUrl);
+        if (normalizedBackendUrl) configuredOrigins.push(normalizedBackendUrl);
+    }
 
     if (process.env.NODE_ENV === 'production') {
         configuredOrigins.push(...PRODUCTION_FRONTEND_ORIGINS);
@@ -43,5 +54,6 @@ const getAllowedOrigins = () => {
 
 module.exports = {
     getRequiredSecret,
-    getAllowedOrigins
+    getAllowedOrigins,
+    normalizeOrigin
 };

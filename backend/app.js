@@ -6,7 +6,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const { rateLimit } = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
-const { getRequiredSecret, getAllowedOrigins } = require('./src/config/security');
+const { getRequiredSecret, getAllowedOrigins, normalizeOrigin } = require('./src/config/security');
 
 // Configs and Middlewares
 const swaggerSpec = require('./src/config/swagger');
@@ -111,12 +111,14 @@ const allowedOrigins = getAllowedOrigins();
 const corsOptions = {
   origin: (origin, callback) => {
     if (process.env.NODE_ENV !== 'production') return callback(null, true);
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, true);
     return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false
+  credentials: false,
+  optionsSuccessStatus: 204,
+  maxAge: 86400
 };
 app.use(cors(corsOptions));
 app.use(compression());
