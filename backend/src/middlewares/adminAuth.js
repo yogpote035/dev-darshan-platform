@@ -1,5 +1,7 @@
 const { Admin } = require('../models');
 const { getAllowedOrigins } = require('../config/security');
+const jwt = require('jsonwebtoken');
+const { getRequiredSecret } = require('../config/security');
 
 module.exports = async (req, res, next) => {
   try {
@@ -10,19 +12,19 @@ module.exports = async (req, res, next) => {
       return res.status(403).send('Cross-site admin request blocked.');
     }
 
-    if (!req.session || !req.session.admin) {
-      return res.redirect('/admin/login');
-    }
+    const authHeader = req.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) return res.redirect('/admin/login');
+    const token = authHeader.slice(7);
+    const decoded = jwt.verify(token, getRequiredSecret('JWT_SECRET'));
+    if (decoded.type !== 'admin') return res.status(401).send('Invalid admin token.');
 
     // Double check status in DB
-    const admin = await Admin.findByPk(req.session.admin.id);
+    const admin = await Admin.findByPk(decoded.id);
     if (!admin || admin.status !== 1) {
-      req.session.destroy();
       return res.redirect('/admin/login');
     }
 
-    // Refresh session details
-    req.session.admin = {
+    req.admin = {
       id: admin.id,
       name: admin.name,
       email: admin.email,
@@ -30,7 +32,7 @@ module.exports = async (req, res, next) => {
     };
 
     // Make admin data available to all templates
-    res.locals.admin = req.session.admin;
+    res.locals.admin = req.admin;
     next();
   } catch (error) {
     console.error('Admin auth middleware error:', error);

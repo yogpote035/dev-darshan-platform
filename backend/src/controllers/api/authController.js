@@ -6,16 +6,6 @@ const { validationResult } = require('express-validator');
 const { User, SubscriptionPlan } = require('../../models');
 const { buildIndianE164, sendPasswordResetCode, checkPasswordResetCode } = require('../../services/passwordResetService');
 
-const setAuthCookie = (res, token) => {
-  res.cookie('live_darshan_auth', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/'
-  });
-};
-
 const findUserByMobile = async (value) => {
   const phone = buildIndianE164(value);
   if (!phone) return null;
@@ -89,11 +79,10 @@ const register = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: newUser.id },
+      { id: newUser.id, type: 'user' },
       getRequiredSecret('JWT_SECRET'),
       { expiresIn: '7d' }
     );
-    setAuthCookie(res, token);
 
     // Exclude password from output
     const userOutput = newUser.toJSON();
@@ -102,6 +91,7 @@ const register = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Registration successful',
+      token,
       user: userOutput
     });
   } catch (error) {
@@ -143,11 +133,10 @@ const login = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, type: 'user' },
       getRequiredSecret('JWT_SECRET'),
       { expiresIn: '7d' }
     );
-    setAuthCookie(res, token);
 
     const userOutput = user.toJSON();
     delete userOutput.password;
@@ -155,6 +144,7 @@ const login = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Login successful',
+      token,
       user: userOutput
     });
   } catch (error) {
@@ -163,10 +153,7 @@ const login = async (req, res) => {
   }
 };
 
-const logout = (req, res) => {
-  res.clearCookie('live_darshan_auth', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
-  return res.status(200).json({ success: true, message: 'Logged out successfully.' });
-};
+const logout = (_req, res) => res.status(200).json({ success: true, message: 'Logged out successfully.' });
 
 const profile = async (req, res) => {
   try {

@@ -1,17 +1,21 @@
 import axios from 'axios';
 
+// Hostinger serves the compiled React files without injecting Vite variables.
+// Keep the public production API endpoint explicit in the client bundle.
+const apiBaseUrl = 'https://api.devdarshanlive.com/api';
+
 const API = axios.create({
-  baseURL: 'https://api.devdarshanlive.com/api',
+  baseURL: apiBaseUrl.replace(/\/$/, ''),
   timeout: 10000,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Authentication is carried by the HttpOnly auth cookie.
 API.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('live_darshan_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => {
@@ -31,6 +35,7 @@ API.interceptors.response.use(
       if (status === 401 || status === 403) {
         if (isAuthRoute || data.message?.includes('blocked')) {
           localStorage.removeItem('live_darshan_user');
+          localStorage.removeItem('live_darshan_token');
           window.dispatchEvent(new Event('auth_logout'));
         }
       }

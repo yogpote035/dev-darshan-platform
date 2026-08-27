@@ -158,14 +158,12 @@
         <p>Admin Control Dashboard</p>
       </div>
 
-      <% if (error) { %>
-        <div class="alert alert-danger d-flex align-items-center" role="alert">
+      <div id="login-error" class="alert alert-danger d-flex align-items-center <%= error ? '' : 'd-none' %>" role="alert">
           <i class="fa-solid fa-triangle-exclamation me-2"></i>
-          <div><%= error %></div>
-        </div>
-      <% } %>
+          <div><%= error || '' %></div>
+      </div>
 
-      <form action="/admin/login" method="POST">
+      <form id="admin-login-form">
         <div class="mb-3">
           <label for="email" class="form-label">Email Address</label>
           <input type="email" class="form-control" id="email" name="email" placeholder="admin@devdarshanlive.com" required>
@@ -183,5 +181,32 @@
 
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const tokenKey = 'dev_darshan_admin_token';
+    const registerAdminWorker = async () => {
+      if (!('serviceWorker' in navigator)) throw new Error('Your browser does not support secure admin authentication.');
+      const registration = await navigator.serviceWorker.register('/admin-auth-sw.js', { scope: '/' });
+      const worker = registration.active || registration.waiting || registration.installing;
+      if (worker) worker.postMessage({ type: 'set-admin-token', token: localStorage.getItem(tokenKey) });
+      return registration;
+    };
+    document.getElementById('admin-login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const error = document.getElementById('login-error');
+      try {
+        const response = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('email').value, password: document.getElementById('password').value }) });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Unable to sign in.');
+        localStorage.setItem(tokenKey, data.token);
+        await registerAdminWorker();
+        window.location.assign('/admin/dashboard');
+      } catch (requestError) {
+        error.classList.remove('d-none'); error.querySelector('div').textContent = requestError.message;
+      }
+    });
+    if (localStorage.getItem(tokenKey)) {
+      registerAdminWorker().then(() => window.location.assign('/admin/dashboard')).catch(() => localStorage.removeItem(tokenKey));
+    }
+  </script>
 </body>
 </html>

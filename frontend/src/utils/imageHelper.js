@@ -1,7 +1,7 @@
 /**
  * Helper to resolve and format category, video, and banner image paths.
  * If the path is an external link (starts with http/https), it returns it as is.
- * Otherwise, it prepends the production backend server host address.
+ * Otherwise, it prepends the configured backend server host address.
  * @param {string} path - The raw image path from database
  * @returns {string} Fully qualified image URL or placeholder fallback
  */

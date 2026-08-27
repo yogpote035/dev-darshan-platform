@@ -32,7 +32,7 @@ router.post('/login', authController.postLogin);
 router.get('/logout', authController.logout);
 
 // ==========================
-// PROTECTED ADMIN ROUTES (SESSION REQD)
+// PROTECTED ADMIN ROUTES (Bearer token required)
 // ==========================
 router.use(adminAuth);
 

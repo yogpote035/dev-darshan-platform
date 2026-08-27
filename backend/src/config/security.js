@@ -1,8 +1,8 @@
 const TEST_JWT_SECRET = 'super_secret_jwt_key_123!@#';
-const TEST_SESSION_SECRET = 'super_secret_session_key_987!@#';
 const PRODUCTION_FRONTEND_ORIGINS = [
     'https://devdarshanlive.com',
     'https://www.devdarshanlive.com',
+    'http://localhost:5173/',
     'https://api.devdarshanlive.com'
 ];
 
@@ -11,7 +11,7 @@ const getRequiredSecret = (name) => {
     if (value) return value;
 
     if (process.env.NODE_ENV === 'test') {
-        return name === 'JWT_SECRET' ? TEST_JWT_SECRET : TEST_SESSION_SECRET;
+        return TEST_JWT_SECRET;
     }
 
     throw new Error(`${name} must be configured before starting the server`);

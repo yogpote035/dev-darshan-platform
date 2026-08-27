@@ -82,7 +82,9 @@ describe('User Authentication APIs', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('live_darshan_auth=')]));
+      expect(res.headers['set-cookie']).toBeUndefined();
+      expect(res.body.token).toEqual(expect.any(String));
+      expect(jwt.verify(res.body.token, process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#').type).toBe('user');
       expect(res.body.user.phone).toBe('9876543210');
     });
 
@@ -163,7 +165,9 @@ describe('User Authentication APIs', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.headers['set-cookie']).toEqual(expect.arrayContaining([expect.stringContaining('live_darshan_auth=')]));
+      expect(res.headers['set-cookie']).toBeUndefined();
+      expect(res.body.token).toEqual(expect.any(String));
+      expect(jwt.verify(res.body.token, process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#').type).toBe('user');
     });
 
     it('should reject invalid password', async () => {

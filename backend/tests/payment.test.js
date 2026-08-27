@@ -31,7 +31,7 @@ describe('Payments & Checkout APIs', () => {
     
     // Create valid auth token for tests
     authToken = jwt.sign(
-      { id: 42 },
+      { id: 42, type: 'user' },
       process.env.JWT_SECRET || 'super_secret_jwt_key_123!@#',
       { expiresIn: '1h' }
     );

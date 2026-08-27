@@ -92,6 +92,12 @@ const handleRazorpayWebhook = async (req, res) => {
                     if (appUser) { const free = await SubscriptionPlan.findOne({ where: { price: 0, status: 1 }, order: [['id', 'ASC']] }); appUser.plan_id = free?.id || 1; appUser.subscription_expiry = new Date(); await appUser.save(); }
                 } else if (subscriptionEntity?.status === 'cancelled') {
                     appSubscription.status = 'cancelled'; appSubscription.cancelled_at = new Date();
+                    if (appUser) {
+                        const free = await SubscriptionPlan.findOne({ where: { price: 0, status: 1 }, order: [['id', 'ASC']] });
+                        appUser.plan_id = free?.id || 1;
+                        appUser.subscription_expiry = new Date();
+                        await appUser.save();
+                    }
                 }
                 await appSubscription.save();
             }

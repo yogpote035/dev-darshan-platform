@@ -16,11 +16,12 @@ const AuthContext = createContext(defaultAuthState);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('live_darshan_token'));
   const [loading, setLoading] = useState(true);
 
   const clearSession = () => {
     localStorage.removeItem('live_darshan_user');
+    localStorage.removeItem('live_darshan_token');
     setToken(null);
     setUser(null);
   };
@@ -43,7 +44,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    loadProfile();
+    if (localStorage.getItem('live_darshan_token')) loadProfile();
+    else setLoading(false);
 
     // Listener for interceptor logouts
     const handleForceLogout = () => {
@@ -61,9 +63,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await API.post('/auth/login', { phone, password });
       if (response.data.success) {
-        const { user: receivedUser } = response.data;
+        const { user: receivedUser, token: receivedToken } = response.data;
         localStorage.setItem('live_darshan_user', JSON.stringify(receivedUser));
-        setToken('authenticated');
+        localStorage.setItem('live_darshan_token', receivedToken);
+        setToken(receivedToken);
         setUser(receivedUser);
         return { success: true };
       }
@@ -89,9 +92,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
-        const { user: receivedUser } = response.data;
+        const { user: receivedUser, token: receivedToken } = response.data;
         localStorage.setItem('live_darshan_user', JSON.stringify(receivedUser));
-        setToken('authenticated');
+        localStorage.setItem('live_darshan_token', receivedToken);
+        setToken(receivedToken);
         setUser(receivedUser);
         return { success: true };
       }

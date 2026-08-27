@@ -5,16 +5,18 @@ const { getRequiredSecret } = require('../config/security');
 module.exports = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    const cookieToken = req.cookies?.live_darshan_auth;
-    if (!cookieToken && (!authHeader || !authHeader.startsWith('Bearer '))) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
     }
 
-    const token = cookieToken || authHeader.split(' ')[1];
+    const token = authHeader.split(' ')[1];
     if (!token) {
       return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
     }
     const decoded = jwt.verify(token, getRequiredSecret('JWT_SECRET'));
+    if (decoded.type !== 'user') {
+      return res.status(401).json({ success: false, message: 'Invalid user token.' });
+    }
 
     const user = await User.findByPk(decoded.id, {
       include: [{ model: SubscriptionPlan, as: 'Plan' }]

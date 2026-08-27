@@ -67,15 +67,14 @@ const PrivacyPolicy = () => {
         {/* Section 4 */}
         <div>
           <h3 className="text-sm font-bold text-gray-100 mb-2 flex items-center gap-1.5 border-b border-zinc-800/80 pb-1">
-            <span className="text-amber-500">4.</span> Cookies
+            <span className="text-amber-500">4.</span> Local Authentication Storage
           </h3>
-          <p className="mb-2">We may use cookies and similar tracking technologies to:</p>
+          <p className="mb-2">We store a signed authentication token in your browser’s local storage to:</p>
           <ul className="list-disc pl-5 space-y-1 text-gray-400">
             <li>Keep you securely logged into your account</li>
             <li>Remember your viewing preferences and settings</li>
-            <li>Analyze traffic patterns to optimize load times</li>
           </ul>
-          <p className="mt-2">You may choose to disable cookies in your browser settings, though doing so may prevent certain site features from functioning correctly.</p>
+          <p className="mt-2">Signing out removes the stored token from this browser. Clearing site data also signs you out.</p>
         </div>
 
         {/* Section 5 */}

@@ -3,9 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
-const session = require('express-session');
 const { rateLimit } = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const { getRequiredSecret, getAllowedOrigins } = require('./src/config/security');
@@ -118,11 +116,10 @@ const corsOptions = {
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: false
 };
 app.use(cors(corsOptions));
 app.use(compression());
-app.use(cookieParser());
 // Razorpay requires the exact raw payload for webhook signature verification.
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
 app.use(express.json());
@@ -150,34 +147,6 @@ const adminLoginLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many login attempts. Please try again later.'
 });
-
-// ==========================
-// SESSION CONFIG (ADMIN PANEL)
-// ==========================
-let sessionConfig = {
-  name: 'dev_darshan_live_admin_sid',
-  secret: getRequiredSecret('SESSION_SECRET'),
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 1 Day
-  }
-};
-
-if (process.env.NODE_ENV !== 'test') {
-  const SequelizeStore = require('connect-session-sequelize')(session.Store);
-  const { sequelize } = require('./src/models');
-  const sessionStore = new SequelizeStore({
-    db: sequelize
-  });
-  sessionStore.sync();
-  sessionConfig.store = sessionStore;
-}
-
-app.use(session(sessionConfig));
 
 // ==========================
 // TEMPLATE ENGINE & STATIC FILES
