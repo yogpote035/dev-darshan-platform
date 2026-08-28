@@ -1,19 +1,25 @@
 const { Admin } = require('../models');
-const { getAllowedOrigins } = require('../config/security');
+const { getAllowedOrigins, normalizeOrigin, getRequiredSecret } = require('../config/security');
 const jwt = require('jsonwebtoken');
-const { getRequiredSecret } = require('../config/security');
 
 module.exports = async (req, res, next) => {
   try {
     const origin = req.get('origin');
     const fetchSite = req.get('sec-fetch-site');
     const allowedOrigins = getAllowedOrigins();
-    if (process.env.NODE_ENV === 'production' && ((origin && !allowedOrigins.includes(origin)) || fetchSite === 'cross-site')) {
+    // A request from the public site to the API host is cross-site by browser
+    // classification, but is safe when its explicit Origin is allowlisted.
+    // A cross-site navigation has no Origin, so it must not receive the
+    // service-worker Bearer token for destructive legacy GET routes.
+    if (process.env.NODE_ENV === 'production' && (
+      (origin && !allowedOrigins.includes(normalizeOrigin(origin)))
+      || (!origin && fetchSite === 'cross-site')
+    )) {
       return res.status(403).send('Cross-site admin request blocked.');
     }
 
     const authHeader = req.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) return res.redirect('/admin/login');
+    if (!authHeader?.startsWith('Bearer ')) return res.redirect('/admin/login?reason=signin');
     const token = authHeader.slice(7);
     const decoded = jwt.verify(token, getRequiredSecret('JWT_SECRET'));
     if (decoded.type !== 'admin') return res.status(401).send('Invalid admin token.');
@@ -21,7 +27,7 @@ module.exports = async (req, res, next) => {
     // Double check status in DB
     const admin = await Admin.findByPk(decoded.id);
     if (!admin || admin.status !== 1) {
-      return res.redirect('/admin/login');
+      return res.redirect('/admin/login?reason=expired');
     }
 
     req.admin = {
@@ -36,6 +42,6 @@ module.exports = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Admin auth middleware error:', error);
-    res.redirect('/admin/login');
+    res.redirect('/admin/login?reason=expired');
   }
 };

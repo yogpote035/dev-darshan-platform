@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // Hostinger serves the compiled React files without injecting Vite variables.
-// Keep the public production API endpoint explicit in the client bundle.
-const apiBaseUrl = 'https://api.devdarshanlive.com/api';
+// Production stays hard-coded; local development uses the local backend.
+const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const apiBaseUrl = isLocalHost ? 'http://localhost:5001/api' : 'https://api.devdarshanlive.com/api';
 
 const API = axios.create({
   baseURL: apiBaseUrl.replace(/\/$/, ''),
@@ -29,15 +30,21 @@ API.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
-      const isAuthRoute = error.config?.url?.includes('/auth/profile');
+      const url = error.config?.url || '';
+      const isPublicAuthRequest = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/forgot-password',
+        '/auth/reset-password'
+      ].some((path) => url.includes(path));
 
-      // If unauthorized (unverified/expired token) or blocked
-      if (status === 401 || status === 403) {
-        if (isAuthRoute || data.message?.includes('blocked')) {
-          localStorage.removeItem('live_darshan_user');
-          localStorage.removeItem('live_darshan_token');
-          window.dispatchEvent(new Event('auth_logout'));
-        }
+      // A protected request returning 401/403 means the local token is expired,
+      // invalid, or the account was blocked. Clear it so every page agrees on
+      // the signed-out state instead of leaving a stale premium/user interface.
+      if ((status === 401 || status === 403) && !isPublicAuthRequest && localStorage.getItem('live_darshan_token')) {
+        localStorage.removeItem('live_darshan_user');
+        localStorage.removeItem('live_darshan_token');
+        window.dispatchEvent(new Event('auth_logout'));
       }
     }
     return Promise.reject(error);

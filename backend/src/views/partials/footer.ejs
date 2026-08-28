@@ -7,7 +7,9 @@
     const adminTokenKey = 'dev_darshan_admin_token';
     const syncAdminToken = () => navigator.serviceWorker?.getRegistration('/').then((registration) => {
       const worker = registration?.active || registration?.waiting || registration?.installing;
-      worker?.postMessage({ type: 'set-admin-token', token: localStorage.getItem(adminTokenKey) });
+      if (!worker) return;
+      const channel = new MessageChannel();
+      worker.postMessage({ type: 'set-admin-token', token: localStorage.getItem(adminTokenKey) }, [channel.port2]);
     });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/admin-auth-sw.js', { scope: '/' }).then(syncAdminToken);

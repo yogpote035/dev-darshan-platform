@@ -96,8 +96,28 @@ const verifySubscription = async (req, res) => {
     if (!plan || !razorpay_subscription_id || !razorpay_payment_id) return res.status(400).json({ success: false, message: 'Missing Autopay authorization details.' });
     const existing = await Subscription.findOne({ where: { razorpay_subscription_id } });
     if (existing) return res.json({ success: true, message: 'Autopay is already active.', subscription: existing });
-    const { isMock, secret } = await getRazorpayInstance();
-    const verified = isMock ? razorpay_subscription_id.startsWith('sub_mock_') : Boolean(razorpay_signature) && crypto.createHmac('sha256', secret).update(`${razorpay_payment_id}|${razorpay_subscription_id}`).digest('hex') === razorpay_signature;
+    const { isMock, secret, instance } = await getRazorpayInstance();
+    let verified = isMock ? razorpay_subscription_id.startsWith('sub_mock_') : Boolean(razorpay_signature)
+      && crypto.createHmac('sha256', secret).update(`${razorpay_payment_id}|${razorpay_subscription_id}`).digest('hex') === razorpay_signature;
+
+    // The checkout signature proves the payment/subscription pair, but not the
+    // local plan being claimed. Fetch Razorpay's source of truth before giving
+    // Premium access so a mandate for a cheaper/different plan cannot be used
+    // to activate this plan.
+    if (verified && !isMock) {
+      const [remoteSubscription, authorizationPayment] = await Promise.all([
+        instance.subscriptions.fetch(razorpay_subscription_id),
+        instance.payments.fetch(razorpay_payment_id)
+      ]);
+      const notes = remoteSubscription?.notes || {};
+      const acceptedSubscriptionStatus = ['created', 'authenticated', 'active', 'pending'];
+      verified = remoteSubscription?.plan_id === plan.razorpay_plan_id
+        && String(notes.user_id || '') === String(req.user.id)
+        && String(notes.plan_id || '') === String(plan.id)
+        && acceptedSubscriptionStatus.includes(remoteSubscription?.status)
+        && authorizationPayment?.subscription_id === razorpay_subscription_id
+        && authorizationPayment?.status !== 'failed';
+    }
     if (!verified) return res.status(400).json({ success: false, message: 'Autopay authorization could not be verified.' });
     const user = await User.findByPk(req.user.id);
     const subscription = await activateTrial(user, plan, razorpay_subscription_id);

@@ -142,13 +142,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests from this IP. Please try again after 15 minutes.' }
 });
-const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: 'Too many login attempts. Please try again later.'
-});
 
 // ==========================
 // TEMPLATE ENGINE & STATIC FILES
@@ -175,7 +168,6 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', apiLimiter, apiRoutes);
 
 // Admin EJS Panel
-app.use('/admin/login', adminLoginLimiter);
 app.use('/admin', adminRoutes);
 
 // Root Redirect

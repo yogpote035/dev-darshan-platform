@@ -107,6 +107,42 @@ describe('membership Autopay lifecycle', () => {
     expect(Subscription.create).not.toHaveBeenCalled();
   });
 
+  it('rejects a valid signature when the Razorpay mandate belongs to another plan', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAZORPAY_KEY_ID = 'rzp_live_test_key';
+    process.env.RAZORPAY_SECRET = 'live_test_secret';
+    SubscriptionPlan.findByPk.mockResolvedValue({ id: 3, plan_name: 'Quarterly', price: 199, duration_days: 90, status: 1, razorpay_plan_id: 'plan_quarterly' });
+    Razorpay.mockImplementationOnce(() => ({
+      subscriptions: { fetch: jest.fn().mockResolvedValue({ plan_id: 'plan_cheaper', status: 'authenticated', notes: { user_id: '7', plan_id: '3' } }) },
+      payments: { fetch: jest.fn().mockResolvedValue({ subscription_id: 'sub_live_123', status: 'authorized' }) }
+    }));
+    const signature = require('crypto').createHmac('sha256', 'live_test_secret').update('pay_live_123|sub_live_123').digest('hex');
+    const res = responseDouble();
+
+    await verifySubscription({ user: { id: 7 }, body: { plan_id: 3, razorpay_subscription_id: 'sub_live_123', razorpay_payment_id: 'pay_live_123', razorpay_signature: signature } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(Subscription.create).not.toHaveBeenCalled();
+  });
+
+  it('activates a live mandate only when Razorpay confirms its plan, user, and payment', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAZORPAY_KEY_ID = 'rzp_live_test_key';
+    process.env.RAZORPAY_SECRET = 'live_test_secret';
+    SubscriptionPlan.findByPk.mockResolvedValue({ id: 3, plan_name: 'Quarterly', price: 199, duration_days: 90, status: 1, razorpay_plan_id: 'plan_quarterly' });
+    Razorpay.mockImplementationOnce(() => ({
+      subscriptions: { fetch: jest.fn().mockResolvedValue({ plan_id: 'plan_quarterly', status: 'authenticated', notes: { user_id: '7', plan_id: '3' } }) },
+      payments: { fetch: jest.fn().mockResolvedValue({ subscription_id: 'sub_live_123', status: 'authorized' }) }
+    }));
+    const signature = require('crypto').createHmac('sha256', 'live_test_secret').update('pay_live_123|sub_live_123').digest('hex');
+    const res = responseDouble();
+
+    await verifySubscription({ user: { id: 7 }, body: { plan_id: 3, razorpay_subscription_id: 'sub_live_123', razorpay_payment_id: 'pay_live_123', razorpay_signature: signature } }, res);
+
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    expect(Subscription.create).toHaveBeenCalledWith(expect.objectContaining({ plan_id: 3, razorpay_subscription_id: 'sub_live_123' }));
+  });
+
   it('cancels Autopay and immediately removes Premium access', async () => {
     const subscription = { id: 100, razorpay_subscription_id: 'sub_mock_123', status: 'active', auto_pay_required: true, save: jest.fn().mockResolvedValue() };
     const user = { id: 7, plan_id: 3, subscription_expiry: new Date(Date.now() + 86400000), save: jest.fn().mockResolvedValue() };

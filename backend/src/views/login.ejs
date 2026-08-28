@@ -183,11 +183,17 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const tokenKey = 'dev_darshan_admin_token';
+    const sendAdminToken = (worker, type, token) => new Promise((resolve, reject) => {
+      const channel = new MessageChannel();
+      channel.port1.onmessage = (event) => event.data?.success ? resolve() : reject(new Error('Unable to save admin login.'));
+      worker.postMessage({ type, token }, [channel.port2]);
+    });
     const registerAdminWorker = async () => {
       if (!('serviceWorker' in navigator)) throw new Error('Your browser does not support secure admin authentication.');
       const registration = await navigator.serviceWorker.register('/admin-auth-sw.js', { scope: '/' });
       const worker = registration.active || registration.waiting || registration.installing;
-      if (worker) worker.postMessage({ type: 'set-admin-token', token: localStorage.getItem(tokenKey) });
+      if (!worker) throw new Error('Unable to prepare secure admin authentication.');
+      await sendAdminToken(worker, 'set-admin-token', localStorage.getItem(tokenKey));
       return registration;
     };
     document.getElementById('admin-login-form').addEventListener('submit', async (event) => {
@@ -204,7 +210,20 @@
         error.classList.remove('d-none'); error.querySelector('div').textContent = requestError.message;
       }
     });
-    if (localStorage.getItem(tokenKey)) {
+    const loginReason = new URLSearchParams(window.location.search).get('reason');
+    if (loginReason) {
+      const hadStoredToken = Boolean(localStorage.getItem(tokenKey));
+      localStorage.removeItem(tokenKey);
+      navigator.serviceWorker?.getRegistration('/').then((registration) => {
+        registration?.active?.postMessage({ type: 'clear-admin-token' });
+      });
+      window.history.replaceState({}, document.title, '/admin/login');
+      if (loginReason === 'expired' || hadStoredToken) {
+        const error = document.getElementById('login-error');
+        error.classList.remove('d-none');
+        error.querySelector('div').textContent = 'Your admin session has expired. Please sign in again.';
+      }
+    } else if (localStorage.getItem(tokenKey)) {
       registerAdminWorker().then(() => window.location.assign('/admin/dashboard')).catch(() => localStorage.removeItem(tokenKey));
     }
   </script>

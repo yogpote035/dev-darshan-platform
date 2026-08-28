@@ -70,7 +70,17 @@ const verifySubscription = async (req, res) => {
                     instance.subscriptions.fetch(razorpay_subscription_id),
                     instance.payments.fetch(razorpay_payment_id)
                 ]);
-                if (authorizationPayment.subscription_id && authorizationPayment.subscription_id !== razorpay_subscription_id) {
+                const notes = remoteSubscription?.notes || {};
+                const acceptedSubscriptionStatus = ['created', 'authenticated', 'active', 'pending'];
+                if (
+                    !remoteSubscription
+                    || remoteSubscription.plan_id !== subscription.razorpay_plan_id
+                    || String(notes.order_id || '') !== String(orderId)
+                    || String(notes.user_id || '') !== String(req.user.id)
+                    || String(notes.product_id || '') !== String(subscription.product_id)
+                    || !acceptedSubscriptionStatus.includes(remoteSubscription.status)
+                    || authorizationPayment.subscription_id !== razorpay_subscription_id
+                ) {
                     valid = false;
                 }
                 if (!authorizationPayment || authorizationPayment.status === 'failed') {
